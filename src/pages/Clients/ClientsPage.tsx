@@ -1,0 +1,199 @@
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../lib/auth'
+import Drawer from '../../components/Drawer'
+import ClientForm from './ClientForm'
+import type { Client, ClientInput } from './types'
+
+export default function ClientsPage() {
+  const { profile, isAdmin } = useAuth()
+  const canWrite = isAdmin || profile?.crm_role === 'Sales'
+
+  const [clients, setClients] = useState<Client[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [showDeleted, setShowDeleted] = useState(false)
+  const [search, setSearch] = useState('')
+  const [editing, setEditing] = useState<Client | null | 'new'>(null)
+
+  async function load() {
+    setLoading(true)
+    setError(null)
+    let query = supabase.from('clients').select('*').order('name')
+    query = showDeleted ? query.not('deleted_at', 'is', null) : query.is('deleted_at', null)
+    const { data, error } = await query
+    if (error) setError(error.message)
+    else setClients((data ?? []) as Client[])
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showDeleted])
+
+  async function handleSave(input: ClientInput) {
+    if (editing && editing !== 'new') {
+      const { error } = await supabase.from('clients').update(input).eq('id', editing.id)
+      if (error) throw error
+    } else {
+      const { error } = await supabase.from('clients').insert(input)
+      if (error) throw error
+    }
+    setEditing(null)
+    await load()
+  }
+
+  async function softDelete(client: Client) {
+    if (!confirm(`Delete "${client.name}"? This can be restored later.`)) return
+    const { data: userData } = await supabase.auth.getUser()
+    const { error } = await supabase
+      .from('clients')
+      .update({ deleted_at: new Date().toISOString(), deleted_by: userData.user?.id ?? null })
+      .eq('id', client.id)
+    if (error) setError(error.message)
+    else await load()
+  }
+
+  async function restore(client: Client) {
+    const { error } = await supabase
+      .from('clients')
+      .update({ deleted_at: null, deleted_by: null })
+      .eq('id', client.id)
+    if (error) setError(error.message)
+    else await load()
+  }
+
+  const filtered = clients.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h1>Clients</h1>
+        {canWrite && !showDeleted && (
+          <button
+            onClick={() => setEditing('new')}
+            style={{
+              padding: '0.5rem 1rem',
+              background: 'var(--green)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              fontWeight: 600,
+            }}
+          >
+            + New Client
+          </button>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center' }}>
+        <input
+          placeholder="Search by name…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ padding: '0.5rem', border: '1px solid var(--border)', borderRadius: 6, width: 260 }}
+        />
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--muted)' }}>
+          <input type="checkbox" checked={showDeleted} onChange={(e) => setShowDeleted(e.target.checked)} />
+          Show deleted
+        </label>
+      </div>
+
+      {error && <div style={{ color: 'var(--danger)', marginBottom: '1rem' }}>{error}</div>}
+
+      {loading ? (
+        <p style={{ color: 'var(--muted)' }}>Loading…</p>
+      ) : filtered.length === 0 ? (
+        <p style={{ color: 'var(--muted)' }}>
+          {showDeleted ? 'No deleted clients.' : 'No clients yet. Add the first one above.'}
+        </p>
+      ) : (
+        <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--surface)' }}>
+          <thead>
+            <tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>
+              <Th>Name</Th>
+              <Th>Type</Th>
+              <Th>Region</Th>
+              <Th>Country</Th>
+              <Th></Th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((c) => (
+              <tr key={c.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                <Td>
+                  {canWrite ? (
+                    <button
+                      onClick={() => setEditing(c)}
+                      style={{ background: 'none', border: 'none', color: 'var(--green)', fontWeight: 600, padding: 0 }}
+                    >
+                      {c.name}
+                    </button>
+                  ) : (
+                    c.name
+                  )}
+                </Td>
+                <Td>
+                  {c.type && (
+                    <span
+                      style={{
+                        background: 'var(--green-light)',
+                        color: 'var(--green-dark)',
+                        padding: '0.15rem 0.5rem',
+                        borderRadius: 999,
+                        fontSize: '9pt',
+                      }}
+                    >
+                      {c.type}
+                    </span>
+                  )}
+                </Td>
+                <Td>{c.region ?? '—'}</Td>
+                <Td>{c.country ?? '—'}</Td>
+                <Td>
+                  {canWrite &&
+                    (showDeleted ? (
+                      <button onClick={() => restore(c)} style={linkBtn}>
+                        Restore
+                      </button>
+                    ) : (
+                      <button onClick={() => softDelete(c)} style={{ ...linkBtn, color: 'var(--danger)' }}>
+                        Delete
+                      </button>
+                    ))}
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {editing && (
+        <Drawer title={editing === 'new' ? 'New Client' : 'Edit Client'} onClose={() => setEditing(null)}>
+          <ClientForm
+            initial={editing === 'new' ? null : editing}
+            onSave={handleSave}
+            onCancel={() => setEditing(null)}
+          />
+        </Drawer>
+      )}
+    </div>
+  )
+}
+
+function Th({ children }: { children?: ReactNode }) {
+  return <th style={{ padding: '0.6rem', fontSize: '9pt', color: 'var(--muted)' }}>{children}</th>
+}
+
+function Td({ children }: { children?: ReactNode }) {
+  return <td style={{ padding: '0.6rem' }}>{children}</td>
+}
+
+const linkBtn: CSSProperties = {
+  background: 'none',
+  border: 'none',
+  color: 'var(--green)',
+  cursor: 'pointer',
+  fontWeight: 500,
+}

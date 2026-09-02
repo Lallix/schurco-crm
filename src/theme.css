@@ -1,0 +1,60 @@
+:root {
+  --green: #218240;
+  --green-dark: #185f2f;
+  --green-light: #e7f3ec;
+  --ink: #14231a;
+  --muted: #5b6b62;
+  --border: #dde5e0;
+  --bg: #f6f8f7;
+  --surface: #ffffff;
+  --danger: #b3261e;
+  --warn: #a15c00;
+  --font: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+  --heading-size: 12pt;
+  --body-size: 10pt;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: var(--body-size);
+  color: var(--ink);
+  background: var(--bg);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font);
+  font-size: var(--heading-size);
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--ink);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: var(--font);
+  font-size: var(--body-size);
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--green);
+}
