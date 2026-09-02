@@ -1,6 +1,7 @@
 import { useEffect, useState, type DragEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { formatZAR } from '../../lib/format'
 import { useAuth } from '../../lib/auth'
 import Drawer from '../../components/Drawer'
 import OpportunityCard from './OpportunityCard'
@@ -159,7 +160,7 @@ export default function OpportunitiesPage() {
                   <span style={{ color: 'var(--muted)', fontSize: '9pt' }}>({stageOpps.length})</span>
                 </div>
                 <div style={{ fontSize: '8pt', color: 'var(--muted)', marginBottom: '0.5rem' }}>
-                  {stageValue.toLocaleString('en-ZA', { style: 'currency', currency: 'ZAR', maximumFractionDigits: 0 })}
+                  {formatZAR(stageValue)}
                 </div>
                 {stageOpps.map((opp) => (
                   <OpportunityCard

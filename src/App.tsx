@@ -8,6 +8,7 @@ import ContactsPage from './pages/Contacts/ContactsPage'
 import OpportunitiesPage from './pages/Opportunities/OpportunitiesPage'
 import ContractsPage from './pages/Contracts/ContractsPage'
 import ActivitiesPage from './pages/Activities/ActivitiesPage'
+import DashboardPage from './pages/Dashboard/DashboardPage'
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth()
@@ -27,12 +28,12 @@ export default function App() {
           </RequireAuth>
         }
       >
+        <Route path="/" element={<DashboardPage />} />
         <Route path="/clients" element={<ClientsPage />} />
         <Route path="/contacts" element={<ContactsPage />} />
         <Route path="/opportunities" element={<OpportunitiesPage />} />
         <Route path="/contracts" element={<ContractsPage />} />
         <Route path="/activities" element={<ActivitiesPage />} />
-        <Route path="/" element={<Navigate to="/clients" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -28,6 +28,9 @@ export default function Layout() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           <strong style={{ color: 'var(--green)', fontSize: '13pt' }}>Schurco CRM</strong>
           <nav style={{ display: 'flex', gap: '0.25rem' }}>
+            <NavLink to="/" end style={navLinkStyle}>
+              Dashboard
+            </NavLink>
             <NavLink to="/clients" style={navLinkStyle}>
               Clients
             </NavLink>

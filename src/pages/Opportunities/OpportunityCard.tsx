@@ -1,10 +1,11 @@
 import type { DragEvent } from 'react'
+import { formatZAR } from '../../lib/format'
 import type { Opportunity } from './types'
 
 function formatValue(value: string | null) {
   const n = value ? Number(value) : NaN
   if (Number.isNaN(n)) return value || '—'
-  return n.toLocaleString('en-ZA', { style: 'currency', currency: 'ZAR', maximumFractionDigits: 0 })
+  return formatZAR(n)
 }
 
 export default function OpportunityCard({

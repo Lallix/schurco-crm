@@ -1,16 +1,10 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
+import { daysUntil, RENEWAL_WINDOW_DAYS } from '../../lib/contracts'
 import Drawer from '../../components/Drawer'
 import ContractForm from './ContractForm'
 import type { Contract, ContractInput } from './types'
-
-const RENEWAL_WINDOW_DAYS = 60
-
-function daysUntil(dateStr: string) {
-  const ms = new Date(dateStr).getTime() - new Date().setHours(0, 0, 0, 0)
-  return Math.round(ms / 86_400_000)
-}
 
 export default function ContractsPage() {
   const { profile, isAdmin } = useAuth()
