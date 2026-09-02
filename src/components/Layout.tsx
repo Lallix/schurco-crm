@@ -34,6 +34,9 @@ export default function Layout() {
             <NavLink to="/contacts" style={navLinkStyle}>
               Contacts
             </NavLink>
+            <NavLink to="/opportunities" style={navLinkStyle}>
+              Opportunities
+            </NavLink>
           </nav>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>

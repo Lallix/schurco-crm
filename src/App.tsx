@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import Layout from './components/Layout'
 import ClientsPage from './pages/Clients/ClientsPage'
 import ContactsPage from './pages/Contacts/ContactsPage'
+import OpportunitiesPage from './pages/Opportunities/OpportunitiesPage'
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth()
@@ -26,6 +27,7 @@ export default function App() {
       >
         <Route path="/clients" element={<ClientsPage />} />
         <Route path="/contacts" element={<ContactsPage />} />
+        <Route path="/opportunities" element={<OpportunitiesPage />} />
         <Route path="/" element={<Navigate to="/clients" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
