@@ -37,6 +37,9 @@ export default function Layout() {
             <NavLink to="/opportunities" style={navLinkStyle}>
               Opportunities
             </NavLink>
+            <NavLink to="/contracts" style={navLinkStyle}>
+              Contracts
+            </NavLink>
           </nav>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
