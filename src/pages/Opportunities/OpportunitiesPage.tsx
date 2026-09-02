@@ -1,4 +1,5 @@
 import { useEffect, useState, type DragEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import Drawer from '../../components/Drawer'
@@ -219,6 +220,11 @@ export default function OpportunitiesPage() {
             onSave={handleSave}
             onCancel={() => setEditing(null)}
           />
+          {editing !== 'new' && (
+            <Link to={`/activities?opportunity=${editing.id}`} style={{ display: 'inline-block', marginTop: '1rem', color: 'var(--green)' }}>
+              View activities for this opportunity →
+            </Link>
+          )}
         </Drawer>
       )}
 

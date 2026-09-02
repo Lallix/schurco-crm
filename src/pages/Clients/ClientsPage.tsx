@@ -157,6 +157,9 @@ export default function ClientsPage() {
                     <Link to={`/contacts?client=${c.id}`} style={linkBtn}>
                       Contacts
                     </Link>
+                    <Link to={`/activities?client=${c.id}`} style={linkBtn}>
+                      Activities
+                    </Link>
                     {canWrite &&
                       (showDeleted ? (
                         <button onClick={() => restore(c)} style={linkBtn}>
