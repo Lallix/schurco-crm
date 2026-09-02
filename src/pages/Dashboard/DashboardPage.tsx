@@ -30,6 +30,7 @@ export default function DashboardPage() {
   const [clients, setClients] = useState<ClientRow[]>([])
   const [contracts, setContracts] = useState<Contract[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const [stageFilter, setStageFilter] = useState('')
   const [repFilter, setRepFilter] = useState('')
@@ -37,12 +38,15 @@ export default function DashboardPage() {
   useEffect(() => {
     async function load() {
       setLoading(true)
+      setError(null)
       const [stagesRes, oppsRes, clientsRes, contractsRes] = await Promise.all([
         supabase.from('pipeline_stages').select('*').is('deleted_at', null).order('sort_order'),
         supabase.from('opportunities').select('id, client_id, title, value, stage, owner').is('deleted_at', null),
         supabase.from('clients').select('id, name, type, region, location').is('deleted_at', null),
         supabase.from('contracts').select('*, client:clients(id, name)').is('deleted_at', null),
       ])
+      const firstError = [stagesRes.error, oppsRes.error, clientsRes.error, contractsRes.error].find(Boolean)
+      if (firstError) setError(firstError.message)
       setStages((stagesRes.data ?? []) as PipelineStage[])
       setOpportunities((oppsRes.data ?? []) as OppRow[])
       setClients((clientsRes.data ?? []) as ClientRow[])
@@ -133,6 +137,8 @@ export default function DashboardPage() {
   return (
     <div>
       <h1>Dashboard</h1>
+
+      {error && <div style={{ color: 'var(--danger)', marginBottom: '1rem' }}>{error}</div>}
 
       <div style={{ display: 'flex', gap: '0.75rem', margin: '1rem 0 1.25rem', alignItems: 'center', flexWrap: 'wrap' }}>
         <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} style={selectStyle}>
