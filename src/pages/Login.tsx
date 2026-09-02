@@ -1,8 +1,9 @@
 import { useState, type CSSProperties, type FormEvent } from 'react'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 
 export default function Login() {
-  const { signIn } = useAuth()
+  const { session, signIn } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -16,6 +17,10 @@ export default function Login() {
     setSubmitting(false)
     if (error) setError(error)
   }
+
+  // Successful sign-in updates `session` in AuthContext, but the router
+  // stays on /login until we explicitly navigate away.
+  if (session) return <Navigate to="/" replace />
 
   return (
     <div
