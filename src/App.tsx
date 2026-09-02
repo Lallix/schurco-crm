@@ -9,6 +9,7 @@ import OpportunitiesPage from './pages/Opportunities/OpportunitiesPage'
 import ContractsPage from './pages/Contracts/ContractsPage'
 import ActivitiesPage from './pages/Activities/ActivitiesPage'
 import DashboardPage from './pages/Dashboard/DashboardPage'
+import TeamPage from './pages/Admin/TeamPage'
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth()
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/opportunities" element={<OpportunitiesPage />} />
         <Route path="/contracts" element={<ContractsPage />} />
         <Route path="/activities" element={<ActivitiesPage />} />
+        <Route path="/admin/team" element={<TeamPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

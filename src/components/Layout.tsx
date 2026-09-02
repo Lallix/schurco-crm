@@ -11,7 +11,7 @@ const navLinkStyle = ({ isActive }: { isActive: boolean }) => ({
 })
 
 export default function Layout() {
-  const { profile, signOut } = useAuth()
+  const { profile, isAdmin, signOut } = useAuth()
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
@@ -46,6 +46,11 @@ export default function Layout() {
             <NavLink to="/activities" style={navLinkStyle}>
               Activities
             </NavLink>
+            {isAdmin && (
+              <NavLink to="/admin/team" style={navLinkStyle}>
+                Team
+              </NavLink>
+            )}
           </nav>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
