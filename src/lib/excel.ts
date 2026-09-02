@@ -29,9 +29,9 @@ export async function exportClientsAndContacts() {
     { header: 'Type', key: 'type', width: 14 },
     { header: 'Country', key: 'country', width: 16 },
     { header: 'Region', key: 'region', width: 16 },
-    { header: 'Address', key: 'address', width: 34 },
-    { header: 'Latitude', key: 'lat', width: 12 },
-    { header: 'Longitude', key: 'lng', width: 12 },
+    { header: 'Head Office Address', key: 'address', width: 34 },
+    { header: 'Head Office Latitude', key: 'lat', width: 14 },
+    { header: 'Head Office Longitude', key: 'lng', width: 14 },
   ]
   for (const c of clients ?? []) {
     clientsSheet.addRow({

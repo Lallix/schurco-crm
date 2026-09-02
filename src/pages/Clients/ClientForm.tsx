@@ -65,11 +65,12 @@ export default function ClientForm({
         <input value={region} onChange={(e) => setRegion(e.target.value)} style={inputStyle} />
       </Field>
 
-      <Field label="Address">
+      <Field label="Head office address">
         <textarea
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           rows={3}
+          placeholder="Company HQ — individual site addresses are captured per audit in the Site Audit App"
           style={{ ...inputStyle, resize: 'vertical' }}
         />
       </Field>
