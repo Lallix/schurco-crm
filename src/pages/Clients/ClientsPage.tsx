@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import Drawer from '../../components/Drawer'
 import ClientForm from './ClientForm'
+import ExcelImportExport from './ExcelImportExport'
 import type { Client, ClientInput } from './types'
 
 export default function ClientsPage() {
@@ -100,6 +101,12 @@ export default function ClientsPage() {
           Show deleted
         </label>
       </div>
+
+      {isAdmin && (
+        <div style={{ marginBottom: '1rem' }}>
+          <ExcelImportExport onImported={load} />
+        </div>
+      )}
 
       {error && <div style={{ color: 'var(--danger)', marginBottom: '1rem' }}>{error}</div>}
 
