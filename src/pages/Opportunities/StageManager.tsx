@@ -40,7 +40,16 @@ export default function StageManager({
   async function toggleWon(stage: PipelineStage) {
     const { error } = await supabase
       .from('pipeline_stages')
-      .update({ is_won: !stage.is_won })
+      .update({ is_won: !stage.is_won, is_lost: stage.is_won ? stage.is_lost : false })
+      .eq('id', stage.id)
+    if (error) setError(error.message)
+    else await onChanged()
+  }
+
+  async function toggleLost(stage: PipelineStage) {
+    const { error } = await supabase
+      .from('pipeline_stages')
+      .update({ is_lost: !stage.is_lost, is_won: stage.is_lost ? stage.is_won : false })
       .eq('id', stage.id)
     if (error) setError(error.message)
     else await onChanged()
@@ -108,6 +117,12 @@ export default function StageManager({
           >
             <input type="checkbox" checked={s.is_won} onChange={() => toggleWon(s)} />
             Won
+          </label>
+          <label
+            style={{ fontSize: '8pt', color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+          >
+            <input type="checkbox" checked={s.is_lost} onChange={() => toggleLost(s)} />
+            Lost
           </label>
           <button onClick={() => move(s, -1)} disabled={i === 0} style={iconBtn}>
             ↑

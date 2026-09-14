@@ -63,6 +63,11 @@ export default function OpportunityCard({
           Close: {opportunity.close_date}
         </div>
       )}
+      {opportunity.loss_reason && (
+        <div style={{ fontSize: '8pt', color: 'var(--danger)', marginTop: '0.25rem' }}>
+          Lost: {opportunity.loss_reason.name}
+        </div>
+      )}
     </div>
   )
 }

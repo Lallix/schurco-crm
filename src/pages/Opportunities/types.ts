@@ -4,6 +4,14 @@ export interface PipelineStage {
   sort_order: number
   color: string
   is_won: boolean
+  is_lost: boolean
+  deleted_at: string | null
+}
+
+export interface LossReason {
+  id: string
+  name: string
+  sort_order: number
   deleted_at: string | null
 }
 
@@ -24,11 +32,14 @@ export interface Opportunity {
   contact_name: string | null
   contact_role: string | null
   notes: string | null
+  loss_reason_id: string | null
+  loss_notes: string | null
   created_at: string
   updated_at: string
   deleted_at: string | null
   client?: { id: string; name: string } | null
   audit?: { id: string; site: string | null; customer: string | null } | null
+  loss_reason?: { id: string; name: string } | null
 }
 
 export interface OpportunityInput {
@@ -41,4 +52,6 @@ export interface OpportunityInput {
   contact_name: string
   contact_role: string
   notes: string
+  loss_reason_id: string | null
+  loss_notes: string
 }

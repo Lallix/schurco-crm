@@ -1,11 +1,12 @@
 import { useState, type CSSProperties, type FormEvent, type ReactNode } from 'react'
 import { CONTACT_ROLES } from '../Contacts/types'
-import type { Opportunity, OpportunityInput, PipelineStage } from './types'
+import type { LossReason, Opportunity, OpportunityInput, PipelineStage } from './types'
 
 export default function OpportunityForm({
   initial,
   clients,
   stages,
+  lossReasons,
   defaultClientId,
   defaultStage,
   onSave,
@@ -14,6 +15,7 @@ export default function OpportunityForm({
   initial: Opportunity | null
   clients: { id: string; name: string }[]
   stages: PipelineStage[]
+  lossReasons: LossReason[]
   defaultClientId: string | null
   defaultStage: string | null
   onSave: (input: OpportunityInput) => Promise<void>
@@ -28,8 +30,12 @@ export default function OpportunityForm({
   const [contactName, setContactName] = useState(initial?.contact_name ?? '')
   const [contactRole, setContactRole] = useState(initial?.contact_role ?? '')
   const [notes, setNotes] = useState(initial?.notes ?? '')
+  const [lossReasonId, setLossReasonId] = useState(initial?.loss_reason_id ?? '')
+  const [lossNotes, setLossNotes] = useState(initial?.loss_notes ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const isLostStage = stages.find((s) => s.name === stage)?.is_lost ?? false
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -46,6 +52,8 @@ export default function OpportunityForm({
         contact_name: contactName.trim(),
         contact_role: contactRole,
         notes: notes.trim(),
+        loss_reason_id: isLostStage ? lossReasonId || null : null,
+        loss_notes: isLostStage ? lossNotes.trim() : '',
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save opportunity')
@@ -82,6 +90,38 @@ export default function OpportunityForm({
           ))}
         </select>
       </Field>
+
+      {isLostStage && (
+        <div
+          style={{
+            background: '#fdeaea',
+            border: '1px solid var(--danger)',
+            borderRadius: 8,
+            padding: '0.75rem',
+            marginBottom: '0.9rem',
+          }}
+        >
+          <Field label="Loss reason">
+            <select value={lossReasonId} onChange={(e) => setLossReasonId(e.target.value)} style={inputStyle}>
+              <option value="">— Select a reason —</option>
+              {lossReasons.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Notes (optional)">
+            <textarea
+              value={lossNotes}
+              onChange={(e) => setLossNotes(e.target.value)}
+              rows={2}
+              placeholder="Any extra detail on why this was lost…"
+              style={{ ...inputStyle, resize: 'vertical' }}
+            />
+          </Field>
+        </div>
+      )}
 
       <Field label="Value (ZAR)">
         <input value={value} onChange={(e) => setValue(e.target.value)} inputMode="decimal" style={inputStyle} />

@@ -22,6 +22,7 @@ interface OppRow {
   value: string | null
   stage: string | null
   owner: string | null
+  loss_reason_id: string | null
 }
 
 export default function DashboardPage() {
@@ -29,6 +30,7 @@ export default function DashboardPage() {
   const [opportunities, setOpportunities] = useState<OppRow[]>([])
   const [clients, setClients] = useState<ClientRow[]>([])
   const [contracts, setContracts] = useState<Contract[]>([])
+  const [lossReasons, setLossReasons] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -39,11 +41,15 @@ export default function DashboardPage() {
     async function load() {
       setLoading(true)
       setError(null)
-      const [stagesRes, oppsRes, clientsRes, contractsRes] = await Promise.all([
+      const [stagesRes, oppsRes, clientsRes, contractsRes, lossReasonsRes] = await Promise.all([
         supabase.from('pipeline_stages').select('*').is('deleted_at', null).order('sort_order'),
-        supabase.from('opportunities').select('id, client_id, title, value, stage, owner').is('deleted_at', null),
+        supabase
+          .from('opportunities')
+          .select('id, client_id, title, value, stage, owner, loss_reason_id')
+          .is('deleted_at', null),
         supabase.from('clients').select('id, name, type, region, location').is('deleted_at', null),
         supabase.from('contracts').select('*, client:clients(id, name)').is('deleted_at', null),
+        supabase.from('loss_reasons').select('id, name').is('deleted_at', null).order('sort_order'),
       ])
       const firstError = [stagesRes.error, oppsRes.error, clientsRes.error, contractsRes.error].find(Boolean)
       if (firstError) setError(firstError.message)
@@ -51,6 +57,7 @@ export default function DashboardPage() {
       setOpportunities((oppsRes.data ?? []) as OppRow[])
       setClients((clientsRes.data ?? []) as ClientRow[])
       setContracts((contractsRes.data ?? []) as unknown as Contract[])
+      setLossReasons(lossReasonsRes.data ?? [])
       setLoading(false)
     }
     load()
@@ -70,15 +77,32 @@ export default function DashboardPage() {
   )
 
   const wonStageNames = useMemo(() => new Set(stages.filter((s) => s.is_won).map((s) => s.name)), [stages])
+  const lostStageNames = useMemo(() => new Set(stages.filter((s) => s.is_lost).map((s) => s.name)), [stages])
 
   const kpis = useMemo(() => {
-    const openOpps = filteredOpps.filter((o) => !wonStageNames.has(o.stage ?? ''))
     const wonOpps = filteredOpps.filter((o) => wonStageNames.has(o.stage ?? ''))
+    const lostOpps = filteredOpps.filter((o) => lostStageNames.has(o.stage ?? ''))
+    const openOpps = filteredOpps.filter((o) => !wonStageNames.has(o.stage ?? '') && !lostStageNames.has(o.stage ?? ''))
     const openValue = openOpps.reduce((sum, o) => sum + (Number(o.value) || 0), 0)
     const wonValue = wonOpps.reduce((sum, o) => sum + (Number(o.value) || 0), 0)
-    const winRate = filteredOpps.length ? (wonOpps.length / filteredOpps.length) * 100 : 0
-    return { count: filteredOpps.length, openValue, wonValue, winRate }
-  }, [filteredOpps, wonStageNames])
+    const lostValue = lostOpps.reduce((sum, o) => sum + (Number(o.value) || 0), 0)
+    const closedCount = wonOpps.length + lostOpps.length
+    const winRate = closedCount ? (wonOpps.length / closedCount) * 100 : 0
+    return { count: filteredOpps.length, openValue, wonValue, lostValue, winRate }
+  }, [filteredOpps, wonStageNames, lostStageNames])
+
+  const byLossReason = useMemo(() => {
+    const lostOpps = filteredOpps.filter((o) => lostStageNames.has(o.stage ?? ''))
+    const map = new Map<string, { count: number; value: number }>()
+    for (const o of lostOpps) {
+      const key = lossReasons.find((r) => r.id === o.loss_reason_id)?.name ?? 'No reason given'
+      const entry = map.get(key) ?? { count: 0, value: 0 }
+      entry.count += 1
+      entry.value += Number(o.value) || 0
+      map.set(key, entry)
+    }
+    return Array.from(map.entries()).sort((a, b) => b[1].value - a[1].value)
+  }, [filteredOpps, lostStageNames, lossReasons])
 
   const byRep = useMemo(() => {
     const map = new Map<string, { count: number; value: number }>()
@@ -173,6 +197,7 @@ export default function DashboardPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
         <Kpi label="Open pipeline value" value={formatZAR(kpis.openValue)} />
         <Kpi label="Won value" value={formatZAR(kpis.wonValue)} />
+        <Kpi label="Lost value" value={formatZAR(kpis.lostValue)} />
         <Kpi label="Win rate" value={`${kpis.winRate.toFixed(0)}%`} />
         <Kpi label="Deals in view" value={String(kpis.count)} />
       </div>
@@ -191,6 +216,18 @@ export default function DashboardPage() {
           ) : (
             byRegion.map(([region, s]) => (
               <BarRow key={region} label={region} count={s.count} value={s.value} max={byRegion[0][1].value} />
+            ))
+          )}
+        </Panel>
+      </div>
+
+      <div style={{ marginBottom: '1.5rem' }}>
+        <Panel title="Lost reasons">
+          {byLossReason.length === 0 ? (
+            <Empty text="No lost deals in view." />
+          ) : (
+            byLossReason.map(([reason, s]) => (
+              <BarRow key={reason} label={reason} count={s.count} value={s.value} max={byLossReason[0][1].value} />
             ))
           )}
         </Panel>

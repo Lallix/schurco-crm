@@ -9,7 +9,7 @@ import type { Client, ClientInput } from './types'
 import ContactForm from '../Contacts/ContactForm'
 import type { Contact, ContactInput } from '../Contacts/types'
 import OpportunityForm from '../Opportunities/OpportunityForm'
-import type { Opportunity, OpportunityInput, PipelineStage } from '../Opportunities/types'
+import type { LossReason, Opportunity, OpportunityInput, PipelineStage } from '../Opportunities/types'
 import ContractForm from '../Contracts/ContractForm'
 import type { Contract, ContractInput } from '../Contracts/types'
 import ActivityForm from '../Activities/ActivityForm'
@@ -40,6 +40,7 @@ export default function ClientDetailPage() {
   const [activities, setActivities] = useState<Activity[]>([])
   const [audits, setAudits] = useState<AuditRow[]>([])
   const [stages, setStages] = useState<PipelineStage[]>([])
+  const [lossReasons, setLossReasons] = useState<LossReason[]>([])
   const [users, setUsers] = useState<{ id: string; name: string | null; email: string | null }[]>([])
 
   const [loading, setLoading] = useState(true)
@@ -56,13 +57,13 @@ export default function ClientDetailPage() {
     setLoading(true)
     setError(null)
 
-    const [clientRes, contactsRes, oppsRes, contractsRes, activitiesRes, auditsRes, stagesRes, usersRes] =
+    const [clientRes, contactsRes, oppsRes, contractsRes, activitiesRes, auditsRes, stagesRes, usersRes, lossReasonsRes] =
       await Promise.all([
         supabase.from('clients').select('*').eq('id', id).single(),
         supabase.from('contacts').select('*').eq('client_id', id).is('deleted_at', null).order('name'),
         supabase
           .from('opportunities')
-          .select('*, audit:audits(id, site, customer)')
+          .select('*, audit:audits(id, site, customer), loss_reason:loss_reasons(id, name)')
           .eq('client_id', id)
           .is('deleted_at', null)
           .order('created_at', { ascending: false }),
@@ -86,6 +87,7 @@ export default function ClientDetailPage() {
           .order('date', { ascending: false }),
         supabase.from('pipeline_stages').select('*').is('deleted_at', null).order('sort_order'),
         supabase.from('profiles').select('id, name, email'),
+        supabase.from('loss_reasons').select('*').is('deleted_at', null).order('sort_order'),
       ])
 
     if (clientRes.error) {
@@ -100,6 +102,7 @@ export default function ClientDetailPage() {
     setActivities((activitiesRes.data ?? []) as unknown as Activity[])
     setStages((stagesRes.data ?? []) as PipelineStage[])
     setUsers(usersRes.data ?? [])
+    setLossReasons((lossReasonsRes.data ?? []) as LossReason[])
 
     const auditRows = (auditsRes.data ?? []) as Omit<AuditRow, 'pumpCount'>[]
     if (auditRows.length > 0) {
@@ -320,6 +323,7 @@ export default function ClientDetailPage() {
                 <span style={{ color: 'var(--muted)', fontSize: '8pt' }}>
                   {formatZAR(Number(o.value) || 0)}
                   {o.audit && ` · from audit at ${o.audit.site ?? 'site'}`}
+                  {o.loss_reason && ` · lost: ${o.loss_reason.name}`}
                 </span>
               </Row>
             ))
@@ -412,6 +416,7 @@ export default function ClientDetailPage() {
             initial={editingOpp === 'new' ? null : editingOpp}
             clients={clientOption}
             stages={stages}
+            lossReasons={lossReasons}
             defaultClientId={client.id}
             defaultStage={null}
             onSave={saveOpportunity}

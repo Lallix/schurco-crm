@@ -7,7 +7,7 @@ import Drawer from '../../components/Drawer'
 import OpportunityCard from './OpportunityCard'
 import OpportunityForm from './OpportunityForm'
 import StageManager from './StageManager'
-import type { Opportunity, OpportunityInput, PipelineStage } from './types'
+import type { LossReason, Opportunity, OpportunityInput, PipelineStage } from './types'
 
 export default function OpportunitiesPage() {
   const { profile, isAdmin, session } = useAuth()
@@ -16,6 +16,7 @@ export default function OpportunitiesPage() {
   const [stages, setStages] = useState<PipelineStage[]>([])
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [clients, setClients] = useState<{ id: string; name: string }[]>([])
+  const [lossReasons, setLossReasons] = useState<LossReason[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<Opportunity | null | 'new'>(null)
@@ -37,7 +38,7 @@ export default function OpportunitiesPage() {
     setError(null)
     const { data, error } = await supabase
       .from('opportunities')
-      .select('*, client:clients(id, name), audit:audits(id, site, customer)')
+      .select('*, client:clients(id, name), audit:audits(id, site, customer), loss_reason:loss_reasons(id, name)')
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
     if (error) setError(error.message)
@@ -54,6 +55,12 @@ export default function OpportunitiesPage() {
       .is('deleted_at', null)
       .order('name')
       .then(({ data }) => setClients(data ?? []))
+    supabase
+      .from('loss_reasons')
+      .select('*')
+      .is('deleted_at', null)
+      .order('sort_order')
+      .then(({ data }) => setLossReasons((data ?? []) as LossReason[]))
   }, [])
 
   function canEdit(opp: Opportunity) {
@@ -91,7 +98,17 @@ export default function OpportunitiesPage() {
     e.preventDefault()
     setDragOverStage(null)
     const oppId = e.dataTransfer.getData('text/plain')
-    if (oppId) moveStage(oppId, stageName)
+    if (!oppId) return
+
+    const targetStage = stages.find((s) => s.name === stageName)
+    if (targetStage?.is_lost) {
+      // Don't silently move it — open the form, pre-set to the Lost stage,
+      // so a loss reason gets captured instead of just vanishing off-board.
+      const opp = opportunities.find((o) => o.id === oppId)
+      if (opp) setEditing({ ...opp, stage: stageName })
+      return
+    }
+    moveStage(oppId, stageName)
   }
 
   const otherStageOpps = opportunities.filter((o) => !stages.some((s) => s.name === o.stage))
@@ -216,6 +233,7 @@ export default function OpportunitiesPage() {
             initial={editing === 'new' ? null : editing}
             clients={clients}
             stages={stages}
+            lossReasons={lossReasons}
             defaultClientId={null}
             defaultStage={newStage}
             onSave={handleSave}
