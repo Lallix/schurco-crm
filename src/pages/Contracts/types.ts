@@ -15,6 +15,7 @@ export interface Contract {
   document_path: string | null
   created_at: string
   updated_at: string
+  updated_by: string | null
   deleted_at: string | null
   deleted_by: string | null
   client?: { id: string; name: string } | null

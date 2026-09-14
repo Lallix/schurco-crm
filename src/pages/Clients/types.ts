@@ -11,6 +11,7 @@ export interface Client {
   location: { lat: number; lng: number } | null
   created_at: string
   updated_at: string
+  updated_by: string | null
   deleted_at: string | null
   deleted_by: string | null
 }

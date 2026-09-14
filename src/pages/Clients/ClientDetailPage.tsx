@@ -259,6 +259,12 @@ export default function ClientDetailPage() {
               {client.address}
             </p>
           )}
+          {client.updated_by && (
+            <p style={{ color: 'var(--muted)', margin: '0.4rem 0 0', fontSize: '8pt' }}>
+              Last edited by {users.find((u) => u.id === client.updated_by)?.name ?? 'someone'} on{' '}
+              {new Date(client.updated_at).toLocaleString()}
+            </p>
+          )}
         </div>
         {canWriteClient && (
           <div style={{ display: 'flex', gap: '0.5rem' }}>

@@ -13,6 +13,7 @@ export default function ContractsPage() {
   const [contracts, setContracts] = useState<Contract[]>([])
   const [clients, setClients] = useState<{ id: string; name: string }[]>([])
   const [opportunities, setOpportunities] = useState<{ id: string; title: string | null; client_id: string | null }[]>([])
+  const [users, setUsers] = useState<{ id: string; name: string | null }[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showDeleted, setShowDeleted] = useState(false)
@@ -42,6 +43,10 @@ export default function ContractsPage() {
       .select('id, title, client_id')
       .is('deleted_at', null)
       .then(({ data }) => setOpportunities(data ?? []))
+    supabase
+      .from('profiles')
+      .select('id, name')
+      .then(({ data }) => setUsers(data ?? []))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showDeleted])
 
@@ -193,6 +198,11 @@ export default function ContractsPage() {
                     </button>
                   ) : (
                     c.client?.name ?? '—'
+                  )}
+                  {c.updated_by && (
+                    <div style={{ fontSize: '7.5pt', color: 'var(--muted)', marginTop: '0.15rem' }}>
+                      Edited by {users.find((u) => u.id === c.updated_by)?.name ?? 'someone'}
+                    </div>
                   )}
                 </Td>
                 <Td>{c.contract_type || '—'}</Td>
