@@ -3,6 +3,10 @@ import { Navigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import type { CrmRole } from '../../lib/auth'
+import Drawer from '../../components/Drawer'
+import AddTeamMemberForm from './AddTeamMemberForm'
+import JobTitleManager from './JobTitleManager'
+import type { JobTitle } from './types'
 
 const CRM_ROLES: Exclude<CrmRole, null>[] = ['Admin', 'Sales', 'Finance', 'Viewer']
 
@@ -12,23 +16,28 @@ interface TeamMember {
   email: string | null
   is_admin: boolean
   crm_role: CrmRole
+  job_title_id: string | null
 }
 
 export default function TeamPage() {
   const { isAdmin } = useAuth()
   const [members, setMembers] = useState<TeamMember[]>([])
+  const [jobTitles, setJobTitles] = useState<JobTitle[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [adding, setAdding] = useState(false)
+  const [managingTitles, setManagingTitles] = useState(false)
 
   async function load() {
     setLoading(true)
     setError(null)
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, name, email, is_admin, crm_role')
-      .order('name')
-    if (error) setError(error.message)
-    else setMembers((data ?? []) as TeamMember[])
+    const [membersRes, titlesRes] = await Promise.all([
+      supabase.from('profiles').select('id, name, email, is_admin, crm_role, job_title_id').order('name'),
+      supabase.from('job_titles').select('*').is('deleted_at', null).order('sort_order'),
+    ])
+    if (membersRes.error) setError(membersRes.error.message)
+    else setMembers((membersRes.data ?? []) as TeamMember[])
+    setJobTitles((titlesRes.data ?? []) as JobTitle[])
     setLoading(false)
   }
 
@@ -48,14 +57,45 @@ export default function TeamPage() {
     else await load()
   }
 
+  async function setJobTitle(id: string, jobTitleId: string) {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ job_title_id: jobTitleId || null })
+      .eq('id', id)
+    if (error) setError(error.message)
+    else await load()
+  }
+
   const unassigned = members.filter((m) => !m.is_admin && !m.crm_role).length
 
   return (
     <div>
-      <h1>Team</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>Team</h1>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button onClick={() => setManagingTitles(true)} style={secondaryBtn}>
+            Manage job titles
+          </button>
+          <button
+            onClick={() => setAdding(true)}
+            style={{
+              padding: '0.5rem 1rem',
+              background: 'var(--green)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              fontWeight: 600,
+            }}
+          >
+            + Add Team Member
+          </button>
+        </div>
+      </div>
+
       <p style={{ color: 'var(--muted)' }}>
-        Assign each person's CRM role. This is separate from the Site Audit App's admin flag (shown read-only
-        below) — changing it here only affects what someone can do inside the CRM.
+        Assign each person's CRM role and job title. CRM role is separate from the Site Audit App's admin flag
+        (shown read-only below) — changing it here only affects what someone can do inside the CRM. Job title is
+        just descriptive and has no effect on access.
       </p>
 
       {unassigned > 0 && (
@@ -85,6 +125,7 @@ export default function TeamPage() {
             <tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>
               <Th>Name</Th>
               <Th>Email</Th>
+              <Th>Job title</Th>
               <Th>Audit app admin</Th>
               <Th>CRM role</Th>
             </tr>
@@ -94,6 +135,20 @@ export default function TeamPage() {
               <tr key={m.id} style={{ borderBottom: '1px solid var(--border)' }}>
                 <Td>{m.name || '—'}</Td>
                 <Td>{m.email || '—'}</Td>
+                <Td>
+                  <select
+                    value={m.job_title_id ?? ''}
+                    onChange={(e) => setJobTitle(m.id, e.target.value)}
+                    style={selectStyle}
+                  >
+                    <option value="">—</option>
+                    {jobTitles.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                </Td>
                 <Td>
                   {m.is_admin ? (
                     <span
@@ -132,6 +187,25 @@ export default function TeamPage() {
           </tbody>
         </table>
       )}
+
+      {adding && (
+        <Drawer title="Add Team Member" onClose={() => setAdding(false)}>
+          <AddTeamMemberForm
+            jobTitles={jobTitles}
+            onDone={async () => {
+              setAdding(false)
+              await load()
+            }}
+            onCancel={() => setAdding(false)}
+          />
+        </Drawer>
+      )}
+
+      {managingTitles && (
+        <Drawer title="Manage Job Titles" onClose={() => setManagingTitles(false)}>
+          <JobTitleManager titles={jobTitles} onChanged={load} />
+        </Drawer>
+      )}
     </div>
   )
 }
@@ -148,4 +222,12 @@ const selectStyle: CSSProperties = {
   padding: '0.4rem',
   border: '1px solid var(--border)',
   borderRadius: 6,
+}
+
+const secondaryBtn: CSSProperties = {
+  padding: '0.5rem 0.8rem',
+  borderRadius: 8,
+  border: '1px solid var(--border)',
+  background: 'var(--surface)',
+  fontWeight: 500,
 }
