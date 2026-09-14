@@ -1,23 +1,19 @@
 import { useState, type CSSProperties, type FormEvent, type ReactNode } from 'react'
 import { supabase } from '../../lib/supabase'
 import type { CrmRole } from '../../lib/auth'
-import type { JobTitle } from './types'
 
 const CRM_ROLES: Exclude<CrmRole, null>[] = ['Admin', 'Sales', 'Finance', 'Viewer']
 
 export default function AddTeamMemberForm({
-  jobTitles,
   onDone,
   onCancel,
 }: {
-  jobTitles: JobTitle[]
   onDone: () => Promise<void>
   onCancel: () => void
 }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [crmRole, setCrmRole] = useState('')
-  const [jobTitleId, setJobTitleId] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -40,7 +36,6 @@ export default function AddTeamMemberForm({
         .from('profiles')
         .update({
           crm_role: crmRole || null,
-          job_title_id: jobTitleId || null,
           org_id: hq?.id ?? null,
         })
         .eq('id', newId)
@@ -81,17 +76,6 @@ export default function AddTeamMemberForm({
           {CRM_ROLES.map((r) => (
             <option key={r} value={r}>
               {r}
-            </option>
-          ))}
-        </select>
-      </Field>
-
-      <Field label="Job title (optional)">
-        <select value={jobTitleId} onChange={(e) => setJobTitleId(e.target.value)} style={inputStyle}>
-          <option value="">—</option>
-          {jobTitles.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
             </option>
           ))}
         </select>
