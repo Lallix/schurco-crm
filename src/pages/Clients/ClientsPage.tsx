@@ -17,6 +17,15 @@ export default function ClientsPage() {
   const [showDeleted, setShowDeleted] = useState(false)
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState<Client | null | 'new'>(null)
+  const [unlinkedCount, setUnlinkedCount] = useState(0)
+
+  async function loadUnlinkedCount() {
+    const [audits, opps] = await Promise.all([
+      supabase.from('audits').select('id', { count: 'exact', head: true }).is('client_id', null).not('customer', 'is', null).is('deleted_at', null),
+      supabase.from('opportunities').select('id', { count: 'exact', head: true }).is('client_id', null).not('customer', 'is', null).is('deleted_at', null),
+    ])
+    setUnlinkedCount((audits.count ?? 0) + (opps.count ?? 0))
+  }
 
   async function load() {
     setLoading(true)
@@ -33,6 +42,11 @@ export default function ClientsPage() {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showDeleted])
+
+  useEffect(() => {
+    if (isAdmin) loadUnlinkedCount()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin])
 
   async function handleSave(input: ClientInput) {
     if (editing && editing !== 'new') {
@@ -108,6 +122,26 @@ export default function ClientsPage() {
         </div>
       )}
 
+      {isAdmin && unlinkedCount > 0 && (
+        <div
+          style={{
+            background: '#fff7e6',
+            border: '1px solid var(--warn)',
+            borderRadius: 10,
+            padding: '0.75rem',
+            marginBottom: '1rem',
+            color: 'var(--warn)',
+            fontSize: '9pt',
+          }}
+        >
+          {unlinkedCount} audit/opportunity record{unlinkedCount === 1 ? '' : 's'} couldn't be auto-linked to a
+          client.{' '}
+          <Link to="/admin/unlinked" style={{ color: 'var(--warn)', fontWeight: 600 }}>
+            Review unlinked records →
+          </Link>
+        </div>
+      )}
+
       {error && <div style={{ color: 'var(--danger)', marginBottom: '1rem' }}>{error}</div>}
 
       {loading ? (
@@ -131,16 +165,9 @@ export default function ClientsPage() {
             {filtered.map((c) => (
               <tr key={c.id} style={{ borderBottom: '1px solid var(--border)' }}>
                 <Td>
-                  {canWrite ? (
-                    <button
-                      onClick={() => setEditing(c)}
-                      style={{ background: 'none', border: 'none', color: 'var(--green)', fontWeight: 600, padding: 0 }}
-                    >
-                      {c.name}
-                    </button>
-                  ) : (
-                    c.name
-                  )}
+                  <Link to={`/clients/${c.id}`} style={{ color: 'var(--green)', fontWeight: 600, textDecoration: 'none' }}>
+                    {c.name}
+                  </Link>
                 </Td>
                 <Td>
                   {c.type && (
@@ -160,24 +187,16 @@ export default function ClientsPage() {
                 <Td>{c.region ?? '—'}</Td>
                 <Td>{c.country ?? '—'}</Td>
                 <Td>
-                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                    <Link to={`/contacts?client=${c.id}`} style={linkBtn}>
-                      Contacts
-                    </Link>
-                    <Link to={`/activities?client=${c.id}`} style={linkBtn}>
-                      Activities
-                    </Link>
-                    {canWrite &&
-                      (showDeleted ? (
-                        <button onClick={() => restore(c)} style={linkBtn}>
-                          Restore
-                        </button>
-                      ) : (
-                        <button onClick={() => softDelete(c)} style={{ ...linkBtn, color: 'var(--danger)' }}>
-                          Delete
-                        </button>
-                      ))}
-                  </div>
+                  {canWrite &&
+                    (showDeleted ? (
+                      <button onClick={() => restore(c)} style={linkBtn}>
+                        Restore
+                      </button>
+                    ) : (
+                      <button onClick={() => softDelete(c)} style={{ ...linkBtn, color: 'var(--danger)' }}>
+                        Delete
+                      </button>
+                    ))}
                 </Td>
               </tr>
             ))}
