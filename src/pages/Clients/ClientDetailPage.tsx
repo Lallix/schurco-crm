@@ -278,7 +278,7 @@ export default function ClientDetailPage() {
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginTop: '1.5rem' }}>
+      <div className="two-col-grid" style={{ marginTop: '1.5rem' }}>
         <Panel
           title="Contacts"
           action={canWriteClient ? () => setEditingContact('new') : undefined}

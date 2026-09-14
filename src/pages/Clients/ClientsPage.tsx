@@ -151,6 +151,7 @@ export default function ClientsPage() {
           {showDeleted ? 'No deleted clients.' : 'No clients yet. Add the first one above.'}
         </p>
       ) : (
+        <div className="table-scroll">
         <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--surface)' }}>
           <thead>
             <tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>
@@ -202,6 +203,7 @@ export default function ClientsPage() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       {editing && (

@@ -176,6 +176,7 @@ export default function ContractsPage() {
       ) : contracts.length === 0 ? (
         <p style={{ color: 'var(--muted)' }}>{showDeleted ? 'No deleted contracts.' : 'No contracts yet.'}</p>
       ) : (
+        <div className="table-scroll">
         <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--surface)' }}>
           <thead>
             <tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>
@@ -252,6 +253,7 @@ export default function ContractsPage() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       {editing && (

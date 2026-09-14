@@ -177,7 +177,7 @@ export default function DashboardPage() {
         <Kpi label="Deals in view" value={String(kpis.count)} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
+      <div className="two-col-grid" style={{ marginBottom: '1.5rem' }}>
         <Panel title="Deals by rep">
           {byRep.length === 0 ? (
             <Empty />

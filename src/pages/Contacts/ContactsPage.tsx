@@ -158,6 +158,7 @@ export default function ContactsPage() {
           {showDeleted ? 'No deleted contacts.' : 'No contacts yet.'}
         </p>
       ) : (
+        <div className="table-scroll">
         <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--surface)' }}>
           <thead>
             <tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>
@@ -204,6 +205,7 @@ export default function ContactsPage() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       {editing && (
