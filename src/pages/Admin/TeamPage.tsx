@@ -17,22 +17,27 @@ interface TeamMember {
   is_admin: boolean
   crm_role: CrmRole
   job_title_id: string | null
+  deactivated_at: string | null
 }
 
 export default function TeamPage() {
-  const { isAdmin } = useAuth()
+  const { isAdmin, session } = useAuth()
   const [members, setMembers] = useState<TeamMember[]>([])
   const [jobTitles, setJobTitles] = useState<JobTitle[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
   const [managingTitles, setManagingTitles] = useState(false)
+  const [busyId, setBusyId] = useState<string | null>(null)
 
   async function load() {
     setLoading(true)
     setError(null)
     const [membersRes, titlesRes] = await Promise.all([
-      supabase.from('profiles').select('id, name, email, is_admin, crm_role, job_title_id').order('name'),
+      supabase
+        .from('profiles')
+        .select('id, name, email, is_admin, crm_role, job_title_id, deactivated_at')
+        .order('name'),
       supabase.from('job_titles').select('*').is('deleted_at', null).order('sort_order'),
     ])
     if (membersRes.error) setError(membersRes.error.message)
@@ -64,6 +69,25 @@ export default function TeamPage() {
       .eq('id', id)
     if (error) setError(error.message)
     else await load()
+  }
+
+  async function toggleActive(member: TeamMember) {
+    const deactivate = !member.deactivated_at
+    const verb = deactivate ? 'Deactivate' : 'Reactivate'
+    const warning = deactivate
+      ? `${verb} ${member.name || member.email}? This blocks their login to BOTH the CRM and the Site Audit App — they share one account.`
+      : `${verb} ${member.name || member.email}? This restores their login to both apps.`
+    if (!confirm(warning)) return
+
+    setBusyId(member.id)
+    setError(null)
+    const { data, error } = await supabase.functions.invoke('deactivate-user', {
+      body: { userId: member.id, deactivate },
+    })
+    if (error) setError(error.message)
+    else if (data?.error) setError(data.error)
+    setBusyId(null)
+    await load()
   }
 
   const unassigned = members.filter((m) => !m.is_admin && !m.crm_role).length
@@ -128,11 +152,16 @@ export default function TeamPage() {
               <Th>Job title</Th>
               <Th>Audit app admin</Th>
               <Th>CRM role</Th>
+              <Th>Status</Th>
+              <Th></Th>
             </tr>
           </thead>
           <tbody>
             {members.map((m) => (
-              <tr key={m.id} style={{ borderBottom: '1px solid var(--border)' }}>
+              <tr
+                key={m.id}
+                style={{ borderBottom: '1px solid var(--border)', opacity: m.deactivated_at ? 0.55 : 1 }}
+              >
                 <Td>{m.name || '—'}</Td>
                 <Td>{m.email || '—'}</Td>
                 <Td>
@@ -181,6 +210,31 @@ export default function TeamPage() {
                       </option>
                     ))}
                   </select>
+                </Td>
+                <Td>
+                  <span
+                    style={{
+                      background: m.deactivated_at ? '#fdeaea' : 'var(--green-light)',
+                      color: m.deactivated_at ? 'var(--danger)' : 'var(--green-dark)',
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: 999,
+                      fontSize: '9pt',
+                    }}
+                  >
+                    {m.deactivated_at ? 'Deactivated' : 'Active'}
+                  </span>
+                </Td>
+                <Td>
+                  {m.id !== session?.user.id && (
+                    <button
+                      onClick={() => toggleActive(m)}
+                      disabled={m.is_admin || busyId === m.id}
+                      title={m.is_admin ? "Admins can't be deactivated from here" : undefined}
+                      style={{ ...secondaryBtn, color: m.deactivated_at ? 'var(--green-dark)' : 'var(--danger)' }}
+                    >
+                      {m.deactivated_at ? 'Reactivate' : 'Deactivate'}
+                    </button>
+                  )}
                 </Td>
               </tr>
             ))}
