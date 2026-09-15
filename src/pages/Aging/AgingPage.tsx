@@ -1,11 +1,20 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import type { OmniAgingRecord, OmniAgingResponse } from './types'
 
 function fmt(n: number, currency: string) {
   return n.toLocaleString('en-ZA', { style: 'currency', currency, maximumFractionDigits: 0 })
+}
+
+type SortField = 'name' | 'outstanding' | 'credit_limit'
+
+function isAuthError(clientsStatus: number | undefined, agingError: unknown) {
+  if (clientsStatus === 401) return true
+  if (agingError instanceof FunctionsHttpError && agingError.context?.status === 401) return true
+  return false
 }
 
 export default function AgingPage() {
@@ -19,18 +28,33 @@ export default function AgingPage() {
   const [linking, setLinking] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState<string | null>(null)
   const [currencyFilter, setCurrencyFilter] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [sortField, setSortField] = useState<SortField>('outstanding')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
-  async function load() {
+  async function load(isRetry = false) {
     setLoading(true)
-    setError(null)
+    if (!isRetry) setError(null)
     const [clientsRes, agingRes] = await Promise.all([
       supabase.from('clients').select('id, name, omni_code').is('deleted_at', null).order('name'),
       supabase.functions.invoke('omni-aging'),
     ])
+
+    if (!isRetry && isAuthError(clientsRes.status, agingRes.error)) {
+      const { error: refreshError } = await supabase.auth.refreshSession()
+      if (!refreshError) {
+        await load(true)
+        return
+      }
+    }
+
     setClients(clientsRes.data ?? [])
     if (agingRes.error) setError(agingRes.error.message)
     else if ((agingRes.data as { error?: string })?.error) setError((agingRes.data as { error: string }).error)
-    else setRecords(((agingRes.data as OmniAgingResponse)?.customer_ageing ?? []))
+    else {
+      setRecords(((agingRes.data as OmniAgingResponse)?.customer_ageing ?? []))
+      setError(null)
+    }
     setLoading(false)
   }
 
@@ -44,10 +68,35 @@ export default function AgingPage() {
     return map
   }, [clients])
 
+  function clientNameFor(r: OmniAgingRecord) {
+    return clientByOmniCode.get(r.customer_account)?.name ?? r.customer_name
+  }
+
+  function toggleSort(field: SortField) {
+    if (field === sortField) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortField(field)
+      setSortDir(field === 'name' ? 'asc' : 'desc')
+    }
+  }
+
   const sorted = useMemo(() => {
-    const filtered = currencyFilter ? records.filter((r) => r.currency === currencyFilter) : records
-    return [...filtered].sort((a, b) => b.outstanding_balance - a.outstanding_balance)
-  }, [records, currencyFilter])
+    let filtered = currencyFilter ? records.filter((r) => r.currency === currencyFilter) : records
+    const term = search.trim().toLowerCase()
+    if (term) {
+      filtered = filtered.filter(
+        (r) => clientNameFor(r).toLowerCase().includes(term) || r.customer_account.toLowerCase().includes(term)
+      )
+    }
+    const dir = sortDir === 'asc' ? 1 : -1
+    return [...filtered].sort((a, b) => {
+      if (sortField === 'name') return clientNameFor(a).localeCompare(clientNameFor(b)) * dir
+      if (sortField === 'credit_limit') return ((a.credit_limit ?? 0) - (b.credit_limit ?? 0)) * dir
+      return (a.outstanding_balance - b.outstanding_balance) * dir
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [records, currencyFilter, search, sortField, sortDir, clientByOmniCode])
 
   const byCurrency = useMemo(() => {
     const map = new Map<string, number>()
@@ -72,7 +121,7 @@ export default function AgingPage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h1>Client Aging</h1>
-        <button onClick={load} disabled={loading} style={secondaryBtn}>
+        <button onClick={() => load()} disabled={loading} style={secondaryBtn}>
           {loading ? 'Refreshing…' : 'Refresh'}
         </button>
       </div>
@@ -121,26 +170,46 @@ export default function AgingPage() {
         </div>
       )}
 
+      {!loading && !error && records.length > 0 && (
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by client name or account…"
+          style={{ ...selectStyle, width: '100%', maxWidth: 340, marginBottom: '1rem', padding: '0.55rem 0.7rem' }}
+        />
+      )}
+
       {loading ? (
         <p style={{ color: 'var(--muted)' }}>Loading…</p>
       ) : sorted.length === 0 && !error ? (
         <p style={{ color: 'var(--muted)' }}>
-          {currencyFilter ? `No ${currencyFilter} accounts.` : 'No aging records returned.'}
+          {search.trim()
+            ? 'No accounts match your search.'
+            : currencyFilter
+              ? `No ${currencyFilter} accounts.`
+              : 'No aging records returned.'}
         </p>
       ) : (
         <div className="table-scroll">
           <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--surface)' }}>
             <thead>
               <tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>
-                <Th>Client</Th>
+                <Th sortField="name" activeField={sortField} dir={sortDir} onSort={toggleSort}>
+                  Client
+                </Th>
                 <Th>Account</Th>
                 <Th>Current</Th>
                 <Th>30d</Th>
                 <Th>60d</Th>
                 <Th>90d</Th>
                 <Th>120d+</Th>
-                <Th>Outstanding</Th>
-                <Th>Credit limit</Th>
+                <Th sortField="outstanding" activeField={sortField} dir={sortDir} onSort={toggleSort}>
+                  Outstanding
+                </Th>
+                <Th sortField="credit_limit" activeField={sortField} dir={sortDir} onSort={toggleSort}>
+                  Credit limit
+                </Th>
               </tr>
             </thead>
             <tbody>
@@ -205,8 +274,36 @@ export default function AgingPage() {
   )
 }
 
-function Th({ children }: { children?: ReactNode }) {
-  return <th style={{ padding: '0.6rem', fontSize: '9pt', color: 'var(--muted)' }}>{children}</th>
+function Th({
+  children,
+  sortField,
+  activeField,
+  dir,
+  onSort,
+}: {
+  children?: ReactNode
+  sortField?: SortField
+  activeField?: SortField
+  dir?: 'asc' | 'desc'
+  onSort?: (field: SortField) => void
+}) {
+  const active = sortField != null && sortField === activeField
+  return (
+    <th
+      onClick={sortField ? () => onSort?.(sortField) : undefined}
+      style={{
+        padding: '0.6rem',
+        fontSize: '9pt',
+        color: active ? 'var(--green-dark)' : 'var(--muted)',
+        cursor: sortField ? 'pointer' : undefined,
+        userSelect: sortField ? 'none' : undefined,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {children}
+      {sortField && <span style={{ marginLeft: '0.25rem', opacity: active ? 1 : 0.35 }}>{active && dir === 'asc' ? '▲' : '▼'}</span>}
+    </th>
+  )
 }
 
 function Td({ children, style }: { children?: ReactNode; style?: CSSProperties }) {
