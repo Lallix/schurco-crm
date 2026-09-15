@@ -60,7 +60,7 @@ export default function Layout() {
             {menuOpen ? '×' : '☰'}
           </button>
           <strong className="brand">Schurco CRM</strong>
-          <GlobalSearch />
+          {!location.pathname.startsWith('/aging') && <GlobalSearch />}
           <div className="user-box">
             <span className="user-name" style={{ color: 'var(--muted)', fontSize: '9pt' }}>
               {profile?.name ?? profile?.email ?? '…'}
