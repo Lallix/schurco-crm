@@ -108,6 +108,14 @@ export default function OpportunitiesPage() {
       if (opp) setEditing({ ...opp, stage: stageName })
       return
     }
+
+    const sourceStage = stages.find((s) => s.name === opportunities.find((o) => o.id === oppId)?.stage)
+    const reopening = (sourceStage?.is_won || sourceStage?.is_lost) && !targetStage?.is_won
+    if (reopening) {
+      const outcome = sourceStage?.is_won ? 'Won' : 'Lost'
+      if (!confirm(`This deal is currently marked ${outcome}. Move it back to "${stageName}" and reopen it?`)) return
+    }
+
     moveStage(oppId, stageName)
   }
 
