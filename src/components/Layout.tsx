@@ -96,6 +96,9 @@ export default function Layout() {
           <NavLink to="/contracts" style={navLinkStyle}>
             Contracts
           </NavLink>
+          <NavLink to="/aging" style={navLinkStyle}>
+            Aging
+          </NavLink>
           <NavLink to="/activities" style={navLinkStyle}>
             Activities
             {dueCount > 0 && <span className="nav-badge">{dueCount}</span>}

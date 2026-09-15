@@ -9,6 +9,7 @@ import ContactsPage from './pages/Contacts/ContactsPage'
 import OpportunitiesPage from './pages/Opportunities/OpportunitiesPage'
 import ContractsPage from './pages/Contracts/ContractsPage'
 import ActivitiesPage from './pages/Activities/ActivitiesPage'
+import AgingPage from './pages/Aging/AgingPage'
 import DashboardPage from './pages/Dashboard/DashboardPage'
 import TeamPage from './pages/Admin/TeamPage'
 import UnlinkedRecordsPage from './pages/Admin/UnlinkedRecordsPage'
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="/opportunities" element={<OpportunitiesPage />} />
         <Route path="/contracts" element={<ContractsPage />} />
         <Route path="/activities" element={<ActivitiesPage />} />
+        <Route path="/aging" element={<AgingPage />} />
         <Route path="/admin/team" element={<TeamPage />} />
         <Route path="/admin/unlinked" element={<UnlinkedRecordsPage />} />
       </Route>
