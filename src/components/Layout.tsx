@@ -107,7 +107,7 @@ export default function Layout() {
           )}
           <span className="nav-divider" aria-hidden="true" />
           <NavLink to="/aging" style={navLinkStyle}>
-            Aging
+            Client Aging
           </NavLink>
         </nav>
       </header>
