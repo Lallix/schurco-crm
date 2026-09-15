@@ -18,6 +18,7 @@ export default function AgingPage() {
   const [error, setError] = useState<string | null>(null)
   const [linking, setLinking] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState<string | null>(null)
+  const [currencyFilter, setCurrencyFilter] = useState<string | null>(null)
 
   async function load() {
     setLoading(true)
@@ -43,10 +44,10 @@ export default function AgingPage() {
     return map
   }, [clients])
 
-  const sorted = useMemo(
-    () => [...records].sort((a, b) => b.outstanding_balance - a.outstanding_balance),
-    [records],
-  )
+  const sorted = useMemo(() => {
+    const filtered = currencyFilter ? records.filter((r) => r.currency === currencyFilter) : records
+    return [...filtered].sort((a, b) => b.outstanding_balance - a.outstanding_balance)
+  }, [records, currencyFilter])
 
   const byCurrency = useMemo(() => {
     const map = new Map<string, number>()
@@ -86,20 +87,46 @@ export default function AgingPage() {
       )}
 
       {!loading && !error && byCurrency.length > 0 && (
-        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-          {byCurrency.map(([currency, total]) => (
-            <div key={currency} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '0.75rem 1rem' }}>
-              <div style={{ fontSize: '8pt', color: 'var(--muted)' }}>Total outstanding ({currency})</div>
-              <div style={{ fontSize: '13pt', fontWeight: 700, color: 'var(--green-dark)' }}>{fmt(total, currency)}</div>
-            </div>
-          ))}
+        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'stretch' }}>
+          {byCurrency.map(([currency, total]) => {
+            const active = currencyFilter === currency
+            return (
+              <button
+                key={currency}
+                onClick={() => setCurrencyFilter(active ? null : currency)}
+                title={active ? `Showing ${currency} only — click to clear` : `Show only ${currency} accounts`}
+                style={{
+                  textAlign: 'left',
+                  background: active ? 'var(--green)' : 'var(--surface)',
+                  border: `1px solid ${active ? 'var(--green)' : 'var(--border)'}`,
+                  borderRadius: 10,
+                  padding: '0.75rem 1rem',
+                  cursor: 'pointer',
+                }}
+              >
+                <div style={{ fontSize: '8pt', color: active ? 'rgba(255,255,255,0.85)' : 'var(--muted)' }}>
+                  Total outstanding ({currency})
+                </div>
+                <div style={{ fontSize: '13pt', fontWeight: 700, color: active ? '#fff' : 'var(--green-dark)' }}>
+                  {fmt(total, currency)}
+                </div>
+              </button>
+            )
+          })}
+          {currencyFilter && (
+            <button onClick={() => setCurrencyFilter(null)} style={{ ...secondaryBtn, alignSelf: 'center' }}>
+              Show all currencies
+            </button>
+          )}
         </div>
       )}
 
       {loading ? (
         <p style={{ color: 'var(--muted)' }}>Loading…</p>
       ) : sorted.length === 0 && !error ? (
-        <p style={{ color: 'var(--muted)' }}>No aging records returned.</p>
+        <p style={{ color: 'var(--muted)' }}>
+          {currencyFilter ? `No ${currencyFilter} accounts.` : 'No aging records returned.'}
+        </p>
       ) : (
         <div className="table-scroll">
           <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--surface)' }}>
