@@ -12,7 +12,7 @@ export interface Contract {
   termination_notice_period: string | null
   has_termination_for_convenience_clause: boolean
   termination_clause_notes: string | null
-  document_path: string | null
+  document_url: string | null
   created_at: string
   updated_at: string
   updated_by: string | null

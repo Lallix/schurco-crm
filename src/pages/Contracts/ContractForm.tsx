@@ -142,11 +142,11 @@ export default function ContractForm({
         />
       </div>
 
-      <Field label={initial?.document_path ? 'Replace document' : 'Document'}>
+      <Field label={initial?.document_url ? 'Replace document' : 'Document'}>
         <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} style={inputStyle} />
-        {initial?.document_path && !file && (
+        {initial?.document_url && !file && (
           <div style={{ fontSize: '8pt', color: 'var(--muted)', marginTop: '0.25rem' }}>
-            A document is already attached. Choose a file to replace it.
+            A document is already attached, stored in SharePoint. Choose a file to replace it.
           </div>
         )}
       </Field>

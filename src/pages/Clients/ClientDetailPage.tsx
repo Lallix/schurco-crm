@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { uploadContractDocument } from '../../lib/sharepoint'
 import { useAuth } from '../../lib/auth'
 import { formatZAR } from '../../lib/format'
 import Drawer from '../../components/Drawer'
@@ -194,13 +195,9 @@ export default function ClientDetailPage() {
       if (error) throw error
     }
     if (file && contractId) {
-      if (editingContract !== 'new' && editingContract?.document_path) {
-        await supabase.storage.from('contracts').remove([editingContract.document_path])
-      }
-      const path = `${contractId}/${file.name}`
-      const { error: uploadError } = await supabase.storage.from('contracts').upload(path, file, { upsert: true })
-      if (uploadError) throw uploadError
-      await supabase.from('contracts').update({ document_path: path }).eq('id', contractId)
+      const url = await uploadContractDocument(client?.name ?? 'Unknown Client', file)
+      const { error: urlError } = await supabase.from('contracts').update({ document_url: url }).eq('id', contractId)
+      if (urlError) throw urlError
     }
     setEditingContract(null)
     await load()

@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { supabase } from '../../lib/supabase'
+import { uploadContractDocument } from '../../lib/sharepoint'
 import { useAuth } from '../../lib/auth'
 import { daysUntil, RENEWAL_WINDOW_DAYS } from '../../lib/contracts'
 import Drawer from '../../components/Drawer'
@@ -63,27 +64,18 @@ export default function ContractsPage() {
     }
 
     if (file && contractId) {
-      if (editing !== 'new' && editing?.document_path) {
-        await supabase.storage.from('contracts').remove([editing.document_path])
-      }
-      const path = `${contractId}/${file.name}`
-      const { error: uploadError } = await supabase.storage.from('contracts').upload(path, file, { upsert: true })
-      if (uploadError) throw uploadError
-      const { error: pathError } = await supabase.from('contracts').update({ document_path: path }).eq('id', contractId)
-      if (pathError) throw pathError
+      const clientName = clients.find((c) => c.id === input.client_id)?.name ?? 'Unknown Client'
+      const url = await uploadContractDocument(clientName, file)
+      const { error: urlError } = await supabase.from('contracts').update({ document_url: url }).eq('id', contractId)
+      if (urlError) throw urlError
     }
 
     setEditing(null)
     await load()
   }
 
-  async function download(contract: Contract) {
-    if (!contract.document_path) return
-    const { data, error } = await supabase.storage
-      .from('contracts')
-      .createSignedUrl(contract.document_path, 60)
-    if (error) setError(error.message)
-    else if (data) window.open(data.signedUrl, '_blank')
+  function download(contract: Contract) {
+    if (contract.document_url) window.open(contract.document_url, '_blank')
   }
 
   async function softDelete(contract: Contract) {
@@ -229,7 +221,7 @@ export default function ContractsPage() {
                   )}
                 </Td>
                 <Td>
-                  {c.document_path ? (
+                  {c.document_url ? (
                     <button onClick={() => download(c)} style={linkBtn}>
                       Download
                     </button>
