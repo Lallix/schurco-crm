@@ -119,6 +119,13 @@ a {
   margin-left: 0.35rem;
 }
 
+.nav-divider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--border);
+  margin: 0.3rem 0.35rem;
+}
+
 /* ---------- responsive utilities ---------- */
 
 .table-scroll {
@@ -155,6 +162,13 @@ a {
 
   .app-nav.open {
     display: flex;
+  }
+
+  .nav-divider {
+    width: auto;
+    height: 1px;
+    align-self: stretch;
+    margin: 0.4rem 0;
   }
 
   .two-col-grid {

@@ -96,9 +96,6 @@ export default function Layout() {
           <NavLink to="/contracts" style={navLinkStyle}>
             Contracts
           </NavLink>
-          <NavLink to="/aging" style={navLinkStyle}>
-            Aging
-          </NavLink>
           <NavLink to="/activities" style={navLinkStyle}>
             Activities
             {dueCount > 0 && <span className="nav-badge">{dueCount}</span>}
@@ -108,6 +105,10 @@ export default function Layout() {
               Team
             </NavLink>
           )}
+          <span className="nav-divider" aria-hidden="true" />
+          <NavLink to="/aging" style={navLinkStyle}>
+            Aging
+          </NavLink>
         </nav>
       </header>
       <main style={{ flex: 1, padding: '1.5rem' }}>
