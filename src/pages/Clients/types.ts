@@ -16,4 +16,4 @@ export interface Client {
   deleted_by: string | null
 }
 
-export type ClientInput = Pick<Client, 'name' | 'type' | 'country' | 'region' | 'address'>
+export type ClientInput = Pick<Client, 'name' | 'type' | 'country' | 'region' | 'address' | 'location'>
