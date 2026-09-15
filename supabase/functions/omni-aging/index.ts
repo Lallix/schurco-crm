@@ -13,7 +13,16 @@
 // no admin/role gate, unlike invite-user and deactivate-user.
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+}
+
 Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: CORS_HEADERS })
+  }
   const authHeader = req.headers.get('Authorization')
   if (!authHeader) {
     return json({ error: 'Missing authorization' }, 401)
@@ -49,6 +58,6 @@ Deno.serve(async (req: Request) => {
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
   })
 }
