@@ -18,18 +18,20 @@ type GroupBy = 'none' | 'rep' | 'customer' | 'category'
 
 const NUMBER_FIELDS = new Set<SortField>(['ordered_qty', 'outstanding_qty_to_deliver', 'value_excl_after_discount'])
 
-const COLUMNS: { field: SortField; label: string; numeric?: boolean }[] = [
-  { field: 'reference', label: 'Order No.' },
-  { field: 'customer_name', label: 'Customer' },
-  { field: 'line_sales_category', label: 'Category' },
-  { field: 'sales_rep_name', label: 'Sales Rep' },
-  { field: 'document_date', label: 'Order Date' },
-  { field: 'due_date', label: 'Due Date' },
-  { field: 'prom_yyyy_mm_dd', label: 'Promised Date' },
-  { field: 'ordered_qty', label: 'Ordered Qty', numeric: true },
-  { field: 'outstanding_qty_to_deliver', label: 'Outstanding Qty', numeric: true },
-  { field: 'currency_code', label: 'Currency' },
-  { field: 'value_excl_after_discount', label: 'Value (excl.)', numeric: true },
+type Align = 'left' | 'center' | 'right'
+
+const COLUMNS: { field: SortField; label: string; align: Align; tight?: boolean }[] = [
+  { field: 'reference', label: 'Order No.', align: 'left' },
+  { field: 'customer_name', label: 'Customer', align: 'left' },
+  { field: 'line_sales_category', label: 'Category', align: 'left' },
+  { field: 'sales_rep_name', label: 'Sales Rep', align: 'left' },
+  { field: 'document_date', label: 'Order Date', align: 'left' },
+  { field: 'due_date', label: 'Due Date', align: 'left' },
+  { field: 'prom_yyyy_mm_dd', label: 'Promised Date', align: 'left' },
+  { field: 'ordered_qty', label: 'Ordered Qty', align: 'center', tight: true },
+  { field: 'outstanding_qty_to_deliver', label: 'Outstanding Qty', align: 'center', tight: true },
+  { field: 'currency_code', label: 'Currency', align: 'center', tight: true },
+  { field: 'value_excl_after_discount', label: 'Value (excl.)', align: 'right' },
 ]
 
 function fmtMoney(n: number, currency: string) {
@@ -231,14 +233,13 @@ export default function OrdersPage() {
       {!loading && !error && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
           <SummaryTile label="Open orders" value={String(filtered.length)} />
-          <SummaryTile
-            label="Outstanding value"
-            value={
-              overall.byCurrency.length === 0
-                ? '—'
-                : overall.byCurrency.map(([cur, val]) => fmtMoney(val, cur)).join(' · ')
-            }
-          />
+          {overall.byCurrency.length === 0 ? (
+            <SummaryTile label="Outstanding value" value="—" />
+          ) : (
+            overall.byCurrency.map(([cur, val]) => (
+              <SummaryTile key={cur} label={`Outstanding value (${cur})`} value={fmtMoney(val, cur)} />
+            ))
+          )}
           <SummaryTile label="Outstanding qty" value={fmtQty(overall.qty)} />
         </div>
       )}
@@ -373,7 +374,7 @@ function OrdersTable({
       <thead>
         <tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)', position: 'sticky', top: 0, background: 'var(--surface)' }}>
           {COLUMNS.map((c) => (
-            <Th key={c.field} field={c.field} active={sortField === c.field} dir={sortDir} onSort={onSort} numeric={c.numeric}>
+            <Th key={c.field} field={c.field} active={sortField === c.field} dir={sortDir} onSort={onSort} align={c.align} tight={c.tight}>
               {c.label}
             </Th>
           ))}
@@ -389,10 +390,10 @@ function OrdersTable({
             <Td>{r.document_date ?? '—'}</Td>
             <Td>{r.due_date ?? '—'}</Td>
             <Td>{r.prom_yyyy_mm_dd ?? '—'}</Td>
-            <Td numeric>{fmtQty(r.ordered_qty)}</Td>
-            <Td numeric>{fmtQty(r.outstanding_qty_to_deliver)}</Td>
-            <Td>{r.currency_code}</Td>
-            <Td numeric>{fmtMoney(r.value_excl_after_discount, r.currency_code)}</Td>
+            <Td align="center" tight>{fmtQty(r.ordered_qty)}</Td>
+            <Td align="center" tight>{fmtQty(r.outstanding_qty_to_deliver)}</Td>
+            <Td align="center" tight>{r.currency_code}</Td>
+            <Td align="right">{fmtMoney(r.value_excl_after_discount, r.currency_code)}</Td>
           </tr>
         ))}
       </tbody>
@@ -406,26 +407,28 @@ function Th({
   active,
   dir,
   onSort,
-  numeric,
+  align,
+  tight,
 }: {
   children?: ReactNode
   field: SortField
   active: boolean
   dir: 'asc' | 'desc'
   onSort: (field: SortField) => void
-  numeric?: boolean
+  align: Align
+  tight?: boolean
 }) {
   return (
     <th
       onClick={() => onSort(field)}
       style={{
-        padding: '0.6rem',
+        padding: tight ? '0.6rem 0.4rem' : '0.6rem',
         fontSize: '9pt',
         color: active ? 'var(--green-dark)' : 'var(--muted)',
         cursor: 'pointer',
         userSelect: 'none',
         whiteSpace: 'nowrap',
-        textAlign: numeric ? 'right' : 'left',
+        textAlign: align,
       }}
     >
       {children}
@@ -434,8 +437,12 @@ function Th({
   )
 }
 
-function Td({ children, numeric }: { children?: ReactNode; numeric?: boolean }) {
-  return <td style={{ padding: '0.6rem', fontSize: '9pt', whiteSpace: 'nowrap', textAlign: numeric ? 'right' : 'left' }}>{children}</td>
+function Td({ children, align = 'left', tight }: { children?: ReactNode; align?: Align; tight?: boolean }) {
+  return (
+    <td style={{ padding: tight ? '0.6rem 0.4rem' : '0.6rem', fontSize: '9pt', whiteSpace: 'nowrap', textAlign: align }}>
+      {children}
+    </td>
+  )
 }
 
 function SummaryTile({ label, value }: { label: string; value: string }) {
