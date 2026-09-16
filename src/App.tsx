@@ -14,6 +14,7 @@ import OrdersPage from './pages/Orders/OrdersPage'
 import DashboardPage from './pages/Dashboard/DashboardPage'
 import TeamPage from './pages/Admin/TeamPage'
 import UnlinkedRecordsPage from './pages/Admin/UnlinkedRecordsPage'
+import OmniClientImportPage from './pages/Admin/OmniClientImportPage'
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth()
@@ -44,6 +45,7 @@ export default function App() {
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/admin/team" element={<TeamPage />} />
         <Route path="/admin/unlinked" element={<UnlinkedRecordsPage />} />
+        <Route path="/admin/omni-clients" element={<OmniClientImportPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

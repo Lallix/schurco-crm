@@ -117,8 +117,11 @@ export default function ClientsPage() {
       </div>
 
       {isAdmin && (
-        <div style={{ marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
           <ExcelImportExport onImported={load} />
+          <Link to="/admin/omni-clients" style={{ color: 'var(--green)', fontSize: '9pt', fontWeight: 500 }}>
+            Import clients from OMNI →
+          </Link>
         </div>
       )}
 
