@@ -15,6 +15,7 @@ import ContractForm from '../Contracts/ContractForm'
 import type { Contract, ContractInput } from '../Contracts/types'
 import ActivityForm from '../Activities/ActivityForm'
 import type { Activity, ActivityInput } from '../Activities/types'
+import OutstandingOrdersPanel from './OutstandingOrdersPanel'
 
 interface AuditRow {
   id: string
@@ -387,6 +388,10 @@ export default function ClientDetailPage() {
             ))
           )}
         </Panel>
+      </div>
+
+      <div style={{ marginTop: '1.25rem' }}>
+        <OutstandingOrdersPanel omniCode={client.omni_code} />
       </div>
 
       {editingClient && (

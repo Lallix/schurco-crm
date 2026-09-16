@@ -9,6 +9,7 @@ export interface Client {
   region: string | null
   address: string | null
   location: { lat: number; lng: number } | null
+  omni_code: string | null
   created_at: string
   updated_at: string
   updated_by: string | null
