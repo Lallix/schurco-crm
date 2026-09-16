@@ -169,6 +169,23 @@ export default function ClientsPage() {
                   <Link to={`/clients/${c.id}`} style={{ color: 'var(--green)', fontWeight: 600, textDecoration: 'none' }}>
                     {c.name}
                   </Link>
+                  {c.omni_code && (
+                    <span
+                      title={`Linked to OMNI account ${c.omni_code}`}
+                      style={{
+                        marginLeft: '0.4rem',
+                        fontSize: '7.5pt',
+                        fontWeight: 700,
+                        color: 'var(--green-dark)',
+                        border: '1px solid var(--green)',
+                        borderRadius: 999,
+                        padding: '0.05rem 0.4rem',
+                        verticalAlign: 'middle',
+                      }}
+                    >
+                      OMNI
+                    </span>
+                  )}
                 </Td>
                 <Td>
                   {c.type && (

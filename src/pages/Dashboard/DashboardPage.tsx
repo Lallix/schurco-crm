@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { formatZAR } from '../../lib/format'
 import { daysUntil, RENEWAL_WINDOW_DAYS } from '../../lib/contracts'
 import PipelineMap from './PipelineMap'
+import OpenOrdersWidget from './OpenOrdersWidget'
 import type { PipelineStage } from '../Opportunities/types'
 import type { Contract } from '../Contracts/types'
 
@@ -232,6 +233,8 @@ export default function DashboardPage() {
           )}
         </Panel>
       </div>
+
+      <OpenOrdersWidget />
 
       <Panel title="Client map">
         <PipelineMap clients={mapClients} />
