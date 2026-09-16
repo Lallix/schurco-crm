@@ -84,10 +84,11 @@ export default function OpenOrdersWidget() {
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginBottom: '0.9rem' }}>
             <Kpi label="Total open orders" value={String(orders.length)} />
-            <Kpi
-              label="Outstanding value"
-              value={totalValue.length === 0 ? '—' : totalValue.map(([cur, val]) => fmtMoney(val, cur)).join(' · ')}
-            />
+            {totalValue.length === 0 ? (
+              <Kpi label="Outstanding value" value="—" />
+            ) : (
+              totalValue.map(([cur, val]) => <Kpi key={cur} label={`Outstanding value (${cur})`} value={fmtMoney(val, cur)} />)
+            )}
             <Kpi label="Active customers" value={String(activeCustomers)} />
           </div>
 
