@@ -60,7 +60,7 @@ export default function Layout() {
             {menuOpen ? '×' : '☰'}
           </button>
           <strong className="brand">Schurco CRM</strong>
-          {!location.pathname.startsWith('/aging') && <GlobalSearch />}
+          {!location.pathname.startsWith('/aging') && !location.pathname.startsWith('/orders') && <GlobalSearch />}
           <div className="user-box">
             <span className="user-name" style={{ color: 'var(--muted)', fontSize: '9pt' }}>
               {profile?.name ?? profile?.email ?? '…'}
@@ -108,6 +108,9 @@ export default function Layout() {
           <span className="nav-divider" aria-hidden="true" />
           <NavLink to="/aging" style={navLinkStyle}>
             Client Aging
+          </NavLink>
+          <NavLink to="/orders" style={navLinkStyle}>
+            Open Sales Orders
           </NavLink>
         </nav>
       </header>
