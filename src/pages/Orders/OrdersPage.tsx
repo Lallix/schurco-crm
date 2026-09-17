@@ -332,6 +332,7 @@ export default function OrdersPage() {
             return (
               <details key={key} open style={{ border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)' }}>
                 <summary
+                  className="disclosure"
                   style={{
                     cursor: 'pointer',
                     padding: '0.7rem 0.9rem',
@@ -340,10 +341,10 @@ export default function OrdersPage() {
                     justifyContent: 'space-between',
                     flexWrap: 'wrap',
                     gap: '0.5rem',
-                    listStyle: 'none',
                   }}
                 >
                   <span>
+                    <span className="chevron">▶</span>
                     {key} <span style={{ fontWeight: 400, color: 'var(--muted)', fontSize: '9pt' }}>({rows.length})</span>
                   </span>
                   <span style={{ fontWeight: 400, fontSize: '9pt', color: 'var(--muted)' }}>

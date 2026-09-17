@@ -126,6 +126,27 @@ a {
   margin: 0.3rem 0.35rem;
 }
 
+/* ---------- collapsible <details> disclosure ---------- */
+
+summary.disclosure {
+  list-style: none;
+}
+
+summary.disclosure::-webkit-details-marker {
+  display: none;
+}
+
+summary.disclosure .chevron {
+  display: inline-block;
+  margin-right: 0.5rem;
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+
+details[open] > summary.disclosure .chevron {
+  transform: rotate(90deg);
+}
+
 /* ---------- responsive utilities ---------- */
 
 .table-scroll {

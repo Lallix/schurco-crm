@@ -47,7 +47,8 @@ export default function OutstandingOrdersPanel({ omniCode }: { omniCode: string 
       }}
       style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10 }}
     >
-      <summary style={{ cursor: 'pointer', padding: '1rem', fontSize: '12pt', fontWeight: 600, listStyle: 'none' }}>
+      <summary className="disclosure" style={{ cursor: 'pointer', padding: '1rem', fontSize: '12pt', fontWeight: 600 }}>
+        <span className="chevron">▶</span>
         Outstanding Orders
         {loaded && !error && orders.length > 0 && (
           <span style={{ fontWeight: 400, color: 'var(--muted)', fontSize: '9pt' }}> ({orders.length})</span>
