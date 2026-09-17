@@ -34,6 +34,13 @@ export interface FetchOmniOrdersResult {
 // widget), so opening any one of them warms the cache for the others too.
 let cached: FetchOmniOrdersResult | null = null
 
+// Synchronously reads the current cache without triggering a fetch — lets
+// a page initialize its state from warm data on mount, so it never has to
+// blank itself to a loading screen just because it remounted.
+export function peekOmniOrders(): FetchOmniOrdersResult | null {
+  return cached
+}
+
 // Live, read-only proxy to OMNI's Outstanding Sales Orders report via the
 // omni-orders Edge Function — nothing is ever written back. Pass
 // force:true (from an explicit "Refresh" click) to bypass the cache and

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
-import { fetchOmniOrders, type OmniOrderRecord } from '../../lib/omniOrders'
+import { fetchOmniOrders, peekOmniOrders, type OmniOrderRecord } from '../../lib/omniOrders'
 
 type SortField =
   | 'reference'
@@ -110,10 +110,12 @@ function downloadCsv(csv: string, filename: string) {
 }
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<OmniOrderRecord[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [lastFetched, setLastFetched] = useState<Date | null>(null)
+  const cachedOrders = peekOmniOrders()
+
+  const [orders, setOrders] = useState<OmniOrderRecord[]>(cachedOrders?.orders ?? [])
+  const [loading, setLoading] = useState(!cachedOrders)
+  const [error, setError] = useState<string | null>(cachedOrders?.error ?? null)
+  const [lastFetched, setLastFetched] = useState<Date | null>(cachedOrders?.fetchedAt ?? null)
 
   const [repFilter, setRepFilter] = useState('')
   const [customerSearch, setCustomerSearch] = useState('')
@@ -127,7 +129,10 @@ export default function OrdersPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
   async function load(force = false) {
-    setLoading(true)
+    // Only show the blocking "Loading…" state on a true cold start — if we
+    // already have something to show (warm cache, or a previous load),
+    // refresh quietly in the background instead of blanking the page.
+    if (orders.length === 0) setLoading(true)
     setError(null)
     const { orders: data, error: err, fetchedAt } = await fetchOmniOrders(force)
     setOrders(data)

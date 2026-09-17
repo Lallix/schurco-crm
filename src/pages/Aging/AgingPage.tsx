@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
-import { fetchOmniAging } from '../../lib/omniAging'
+import { fetchOmniAging, peekOmniAging } from '../../lib/omniAging'
 import type { OmniAgingRecord } from './types'
 
 function fmt(n: number, currency: string) {
@@ -15,11 +15,13 @@ export default function AgingPage() {
   const { profile, isAdmin } = useAuth()
   const canWrite = isAdmin || profile?.crm_role === 'Sales'
 
-  const [records, setRecords] = useState<OmniAgingRecord[]>([])
+  const cachedAging = peekOmniAging()
+
+  const [records, setRecords] = useState<OmniAgingRecord[]>(cachedAging?.records ?? [])
   const [clients, setClients] = useState<{ id: string; name: string; omni_code: string | null }[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [lastFetched, setLastFetched] = useState<Date | null>(null)
+  const [loading, setLoading] = useState(!cachedAging)
+  const [error, setError] = useState<string | null>(cachedAging?.error ?? null)
+  const [lastFetched, setLastFetched] = useState<Date | null>(cachedAging?.fetchedAt ?? null)
   const [linking, setLinking] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState<string | null>(null)
   const [currencyFilter, setCurrencyFilter] = useState<string | null>(null)
@@ -28,7 +30,10 @@ export default function AgingPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
   async function load(force = false, isRetry = false) {
-    setLoading(true)
+    // Only show the blocking "Loading…" state on a true cold start — if we
+    // already have something to show (warm cache, or a previous load),
+    // refresh quietly in the background instead of blanking the page.
+    if (records.length === 0) setLoading(true)
     if (!isRetry) setError(null)
     const [clientsRes, agingRes] = await Promise.all([
       supabase.from('clients').select('id, name, omni_code').is('deleted_at', null).order('name'),

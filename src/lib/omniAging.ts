@@ -13,6 +13,13 @@ export interface FetchOmniAgingResult {
 // cleared by a hard reload, since that re-initializes this module.
 let cached: FetchOmniAgingResult | null = null
 
+// Synchronously reads the current cache without triggering a fetch — lets
+// a page initialize its state from warm data on mount, so it never has to
+// blank itself to a loading screen just because it remounted.
+export function peekOmniAging(): FetchOmniAgingResult | null {
+  return cached
+}
+
 // Live, read-only proxy to OMNI's Customer Ageing report via the
 // omni-aging Edge Function. Pass force:true (from an explicit "Refresh"
 // click) to bypass the cache and hit OMNI again; a failed fetch is never
