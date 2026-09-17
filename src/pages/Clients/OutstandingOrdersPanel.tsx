@@ -56,6 +56,7 @@ export default function OutstandingOrdersPanel({ omniCode }: { omniCode: string 
       <div style={{ padding: '0 1rem 1rem' }}>
         <p style={{ fontSize: '8pt', color: 'var(--muted)', marginTop: 0 }}>
           Live from OMNI — read-only, not stored in the CRM.
+          {omniCode && ` Linked account: ${omniCode}.`}
         </p>
 
         {!omniCode ? (

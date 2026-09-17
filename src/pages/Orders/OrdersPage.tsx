@@ -4,6 +4,7 @@ import { fetchOmniOrders, type OmniOrderRecord } from '../../lib/omniOrders'
 type SortField =
   | 'reference'
   | 'customer_name'
+  | 'customer_account'
   | 'line_sales_category'
   | 'sales_rep_name'
   | 'document_date'
@@ -23,6 +24,7 @@ type Align = 'left' | 'center' | 'right'
 const COLUMNS: { field: SortField; label: string; align: Align; tight?: boolean }[] = [
   { field: 'reference', label: 'Order No.', align: 'left' },
   { field: 'customer_name', label: 'Customer', align: 'left' },
+  { field: 'customer_account', label: 'Account', align: 'left' },
   { field: 'line_sales_category', label: 'Category', align: 'left' },
   { field: 'sales_rep_name', label: 'Sales Rep', align: 'left' },
   { field: 'document_date', label: 'Order Date', align: 'left' },
@@ -77,6 +79,7 @@ function toCsv(rows: OmniOrderRecord[]): string {
       [
         r.reference,
         r.customer_name,
+        r.customer_account,
         r.line_sales_category,
         r.sales_rep_name,
         r.document_date,
@@ -147,7 +150,12 @@ export default function OrdersPage() {
       if (repFilter && o.sales_rep_name !== repFilter) return false
       if (categoryFilter && o.line_sales_category !== categoryFilter) return false
       if (currencyFilter && o.currency_code !== currencyFilter) return false
-      if (term && !(o.customer_name ?? '').toLowerCase().includes(term)) return false
+      if (
+        term &&
+        !(o.customer_name ?? '').toLowerCase().includes(term) &&
+        !(o.customer_account ?? '').toLowerCase().includes(term)
+      )
+        return false
       if (dateFrom && (!o.document_date || o.document_date < dateFrom)) return false
       if (dateTo && (!o.document_date || o.document_date > dateTo)) return false
       return true
@@ -259,7 +267,7 @@ export default function OrdersPage() {
           <input
             value={customerSearch}
             onChange={(e) => setCustomerSearch(e.target.value)}
-            placeholder="Search customer…"
+            placeholder="Search customer or account…"
             style={{ ...selectStyle, width: 180 }}
           />
         </FilterField>
@@ -290,7 +298,7 @@ export default function OrdersPage() {
           <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} style={selectStyle} />
         </FilterField>
         {filtersActive && (
-          <button onClick={clearFilters} style={{ ...secondaryBtn, alignSelf: 'center' }}>
+          <button onClick={clearFilters} style={secondaryBtn}>
             Clear filters
           </button>
         )}
@@ -385,6 +393,7 @@ function OrdersTable({
           <tr key={r.reference} style={{ borderBottom: '1px solid var(--border)' }}>
             <Td>{r.reference}</Td>
             <Td>{r.customer_name}</Td>
+            <Td>{r.customer_account}</Td>
             <Td>{r.line_sales_category || '—'}</Td>
             <Td>{r.sales_rep_name || '—'}</Td>
             <Td>{r.document_date ?? '—'}</Td>

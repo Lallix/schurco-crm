@@ -29,6 +29,8 @@ export default function ClientForm({
   const [location, setLocation] = useState(initial?.location ?? null)
   const [locating, setLocating] = useState(false)
   const [locateError, setLocateError] = useState<string | null>(null)
+  const [coordInput, setCoordInput] = useState('')
+  const [coordError, setCoordError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -41,14 +43,36 @@ export default function ClientForm({
     setLocateError(null)
     try {
       const query = [address, region, country].filter(Boolean).join(', ') || name
-      const result = await geocodeAddress(query)
-      if (!result) setLocateError('No match found — try a more specific address, or drop the pin manually below.')
+      // Only restrict to South Africa when the country field says so (or
+      // is blank, the overwhelmingly common case) — leave it open for a
+      // client based elsewhere so their address can still be found.
+      const countryCodes = !country.trim() || /south\s*africa|^rsa$/i.test(country.trim()) ? 'za' : undefined
+      const result = await geocodeAddress(query, countryCodes)
+      if (!result) setLocateError('No match found — try a more specific address, or paste coordinates below.')
       else setLocation({ lat: result.lat, lng: result.lng })
     } catch (err) {
       setLocateError(err instanceof Error ? err.message : 'Lookup failed')
     } finally {
       setLocating(false)
     }
+  }
+
+  function useCoordInput() {
+    const match = coordInput.trim().match(/^(-?\d+(?:\.\d+)?)[,\s]+(-?\d+(?:\.\d+)?)$/)
+    if (!match) {
+      setCoordError('Enter as "latitude, longitude" — e.g. -26.14600, 27.85900')
+      return
+    }
+    const lat = parseFloat(match[1])
+    const lng = parseFloat(match[2])
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      setCoordError('That doesn’t look like a valid latitude/longitude pair.')
+      return
+    }
+    setLocation({ lat, lng })
+    setCoordInput('')
+    setCoordError(null)
+    setLocateError(null)
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -118,6 +142,22 @@ export default function ClientForm({
         </div>
 
         {locateError && <div style={{ color: 'var(--danger)', fontSize: '9pt', marginBottom: '0.4rem' }}>{locateError}</div>}
+
+        <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.6rem' }}>
+          <input
+            value={coordInput}
+            onChange={(e) => {
+              setCoordInput(e.target.value)
+              setCoordError(null)
+            }}
+            placeholder="Or paste coordinates from Google Maps: -26.14600, 27.85900"
+            style={{ ...inputStyle, fontSize: '9pt' }}
+          />
+          <button type="button" onClick={useCoordInput} disabled={!coordInput.trim()} style={secondaryBtn}>
+            Use
+          </button>
+        </div>
+        {coordError && <div style={{ color: 'var(--danger)', fontSize: '9pt', marginBottom: '0.4rem' }}>{coordError}</div>}
 
         {location ? (
           <>
