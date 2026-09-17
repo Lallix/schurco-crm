@@ -89,8 +89,8 @@ export default function OutstandingOrdersPanel({ omniCode }: { omniCode: string 
                 </tr>
               </thead>
               <tbody>
-                {orders.map((o) => (
-                  <tr key={o.reference} style={{ borderBottom: '1px solid var(--border)' }}>
+                {orders.map((o, i) => (
+                  <tr key={`${o.reference}-${i}`} style={{ borderBottom: '1px solid var(--border)' }}>
                     <Td>{o.reference}</Td>
                     <Td>{o.line_sales_category || '—'}</Td>
                     <Td>{o.sales_rep_name || '—'}</Td>

@@ -126,13 +126,13 @@ export default function OrdersPage() {
   const [sortField, setSortField] = useState<SortField>('due_date')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
-  async function load() {
+  async function load(force = false) {
     setLoading(true)
     setError(null)
-    const { orders: data, error: err } = await fetchOmniOrders()
+    const { orders: data, error: err, fetchedAt } = await fetchOmniOrders(force)
     setOrders(data)
     setError(err)
-    setLastFetched(new Date())
+    setLastFetched(fetchedAt)
     setLoading(false)
   }
 
@@ -220,7 +220,7 @@ export default function OrdersPage() {
               Last fetched: {lastFetched.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
-          <button onClick={load} disabled={loading} style={secondaryBtn}>
+          <button onClick={() => load(true)} disabled={loading} style={secondaryBtn}>
             {loading ? 'Refreshing…' : 'Refresh'}
           </button>
           <button onClick={exportCsv} disabled={loading || sorted.length === 0} style={secondaryBtn}>
@@ -229,7 +229,8 @@ export default function OrdersPage() {
         </div>
       </div>
       <p style={{ color: 'var(--muted)' }}>
-        Live, read-only view from OMNI — fetched on load and on Refresh only. Nothing here is ever written back to OMNI.
+        Live, read-only view from OMNI. Kept from your last fetch this session — select Refresh for the latest, or
+        reload the page. Nothing here is ever written back to OMNI.
       </p>
 
       {error && (
@@ -390,8 +391,8 @@ function OrdersTable({
         </tr>
       </thead>
       <tbody>
-        {rows.map((r) => (
-          <tr key={r.reference} style={{ borderBottom: '1px solid var(--border)' }}>
+        {rows.map((r, i) => (
+          <tr key={`${r.reference}-${i}`} style={{ borderBottom: '1px solid var(--border)' }}>
             <Td>{r.reference}</Td>
             <Td>{r.customer_name}</Td>
             <Td>{r.customer_account}</Td>

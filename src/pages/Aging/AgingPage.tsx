@@ -1,21 +1,15 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
-import type { OmniAgingRecord, OmniAgingResponse } from './types'
+import { fetchOmniAging } from '../../lib/omniAging'
+import type { OmniAgingRecord } from './types'
 
 function fmt(n: number, currency: string) {
   return n.toLocaleString('en-ZA', { style: 'currency', currency, maximumFractionDigits: 0 })
 }
 
 type SortField = 'name' | 'outstanding' | 'credit_limit'
-
-function isAuthError(clientsStatus: number | undefined, agingError: unknown) {
-  if (clientsStatus === 401) return true
-  if (agingError instanceof FunctionsHttpError && agingError.context?.status === 401) return true
-  return false
-}
 
 export default function AgingPage() {
   const { profile, isAdmin } = useAuth()
@@ -25,6 +19,7 @@ export default function AgingPage() {
   const [clients, setClients] = useState<{ id: string; name: string; omni_code: string | null }[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [lastFetched, setLastFetched] = useState<Date | null>(null)
   const [linking, setLinking] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState<string | null>(null)
   const [currencyFilter, setCurrencyFilter] = useState<string | null>(null)
@@ -32,29 +27,26 @@ export default function AgingPage() {
   const [sortField, setSortField] = useState<SortField>('outstanding')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
-  async function load(isRetry = false) {
+  async function load(force = false, isRetry = false) {
     setLoading(true)
     if (!isRetry) setError(null)
     const [clientsRes, agingRes] = await Promise.all([
       supabase.from('clients').select('id, name, omni_code').is('deleted_at', null).order('name'),
-      supabase.functions.invoke('omni-aging'),
+      fetchOmniAging(force),
     ])
 
-    if (!isRetry && isAuthError(clientsRes.status, agingRes.error)) {
+    if (!isRetry && clientsRes.status === 401) {
       const { error: refreshError } = await supabase.auth.refreshSession()
       if (!refreshError) {
-        await load(true)
+        await load(force, true)
         return
       }
     }
 
     setClients(clientsRes.data ?? [])
-    if (agingRes.error) setError(agingRes.error.message)
-    else if ((agingRes.data as { error?: string })?.error) setError((agingRes.data as { error: string }).error)
-    else {
-      setRecords(((agingRes.data as OmniAgingResponse)?.customer_ageing ?? []))
-      setError(null)
-    }
+    setRecords(agingRes.records)
+    setError(agingRes.error)
+    setLastFetched(agingRes.fetchedAt)
     setLoading(false)
   }
 
@@ -119,14 +111,22 @@ export default function AgingPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <h1>Client Aging</h1>
-        <button onClick={() => load()} disabled={loading} style={secondaryBtn}>
-          {loading ? 'Refreshing…' : 'Refresh'}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {lastFetched && (
+            <span style={{ fontSize: '8pt', color: 'var(--muted)' }}>
+              Last fetched: {lastFetched.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
+          <button onClick={() => load(true)} disabled={loading} style={secondaryBtn}>
+            {loading ? 'Refreshing…' : 'Refresh'}
+          </button>
+        </div>
       </div>
       <p style={{ color: 'var(--muted)' }}>
-        Live from OMNI — pulled fresh each time you open or refresh this page, not stored in the CRM.
+        Live, read-only view from OMNI. Kept from your last fetch this session — select Refresh for the latest, or
+        reload the page. Not stored in the CRM.
       </p>
 
       {error && (
