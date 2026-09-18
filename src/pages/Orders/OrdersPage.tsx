@@ -21,20 +21,22 @@ const NUMBER_FIELDS = new Set<SortField>(['ordered_qty', 'outstanding_qty_to_del
 
 type Align = 'left' | 'center' | 'right'
 
-const COLUMNS: { field: SortField; label: string; align: Align; tight?: boolean }[] = [
-  { field: 'reference', label: 'Order No.', align: 'left' },
-  { field: 'customer_name', label: 'Customer', align: 'left' },
-  { field: 'customer_account', label: 'Account', align: 'left' },
-  { field: 'line_sales_category', label: 'Category', align: 'left' },
-  { field: 'sales_rep_name', label: 'Sales Rep', align: 'left' },
-  { field: 'document_date', label: 'Order Date', align: 'left' },
-  { field: 'due_date', label: 'Due Date', align: 'left' },
-  { field: 'prom_yyyy_mm_dd', label: 'Promised Date', align: 'left' },
-  { field: 'ordered_qty', label: 'Ordered Qty', align: 'center', tight: true },
-  { field: 'outstanding_qty_to_deliver', label: 'Outstanding Qty', align: 'center', tight: true },
-  { field: 'currency_code', label: 'Currency', align: 'center', tight: true },
-  { field: 'value_excl_after_discount', label: 'Value (excl.)', align: 'right' },
+const COLUMNS: { field: SortField; label: string; align: Align; tight?: boolean; width: number }[] = [
+  { field: 'reference', label: 'Order No.', align: 'left', width: 90 },
+  { field: 'customer_name', label: 'Customer', align: 'left', width: 170 },
+  { field: 'customer_account', label: 'Account', align: 'left', width: 90 },
+  { field: 'line_sales_category', label: 'Category', align: 'left', width: 170 },
+  { field: 'sales_rep_name', label: 'Sales Rep', align: 'left', width: 100 },
+  { field: 'document_date', label: 'Order Date', align: 'left', width: 95 },
+  { field: 'due_date', label: 'Due Date', align: 'left', width: 95 },
+  { field: 'prom_yyyy_mm_dd', label: 'Promised Date', align: 'left', width: 110 },
+  { field: 'ordered_qty', label: 'Ordered Qty', align: 'center', tight: true, width: 90 },
+  { field: 'outstanding_qty_to_deliver', label: 'Outstanding Qty', align: 'center', tight: true, width: 100 },
+  { field: 'currency_code', label: 'Currency', align: 'center', tight: true, width: 80 },
+  { field: 'value_excl_after_discount', label: 'Value (excl.)', align: 'right', width: 120 },
 ]
+
+const TABLE_WIDTH = COLUMNS.reduce((sum, c) => sum + c.width, 0)
 
 function fmtMoney(n: number, currency: string) {
   try {
@@ -385,7 +387,20 @@ function OrdersTable({
   onSort: (field: SortField) => void
 }) {
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--surface)' }}>
+    <table
+      style={{
+        width: '100%',
+        minWidth: TABLE_WIDTH,
+        borderCollapse: 'collapse',
+        background: 'var(--surface)',
+        tableLayout: 'fixed',
+      }}
+    >
+      <colgroup>
+        {COLUMNS.map((c) => (
+          <col key={c.field} style={{ width: c.width }} />
+        ))}
+      </colgroup>
       <thead>
         <tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)', position: 'sticky', top: 0, background: 'var(--surface)' }}>
           {COLUMNS.map((c) => (
@@ -444,6 +459,8 @@ function Th({
         cursor: 'pointer',
         userSelect: 'none',
         whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
         textAlign: align,
       }}
     >
@@ -455,7 +472,16 @@ function Th({
 
 function Td({ children, align = 'left', tight }: { children?: ReactNode; align?: Align; tight?: boolean }) {
   return (
-    <td style={{ padding: tight ? '0.6rem 0.4rem' : '0.6rem', fontSize: '9pt', whiteSpace: 'nowrap', textAlign: align }}>
+    <td
+      style={{
+        padding: tight ? '0.6rem 0.4rem' : '0.6rem',
+        fontSize: '9pt',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        textAlign: align,
+      }}
+    >
       {children}
     </td>
   )
