@@ -1,6 +1,10 @@
 export const CONTACT_ROLES = [
   'Plant Engineer',
   'Head of Engineering',
+  'Mechanical Engineer',
+  'Process Engineer',
+  'Metallurgist',
+  'Reliability Engineer',
   'Maintenance Foreman',
   'Store Manager',
   'Procurement Manager',
@@ -8,13 +12,12 @@ export const CONTACT_ROLES = [
   'Production Manager',
   'Other',
 ] as const
-export type ContactRole = (typeof CONTACT_ROLES)[number]
 
 export interface Contact {
   id: string
   client_id: string | null
   name: string
-  role: ContactRole | null
+  role: string | null
   email: string | null
   phone: string | null
   notes: string | null

@@ -1,6 +1,12 @@
 import { useState, type CSSProperties, type FormEvent, type ReactNode } from 'react'
 import { CONTACT_ROLES, type Contact, type ContactInput } from './types'
 
+const KNOWN_ROLES: readonly string[] = CONTACT_ROLES
+
+function isKnownRole(role: string) {
+  return role !== 'Other' && KNOWN_ROLES.includes(role)
+}
+
 export default function ContactForm({
   initial,
   clients,
@@ -16,7 +22,13 @@ export default function ContactForm({
 }) {
   const [clientId, setClientId] = useState(initial?.client_id ?? defaultClientId ?? '')
   const [name, setName] = useState(initial?.name ?? '')
-  const [role, setRole] = useState<Contact['role']>(initial?.role ?? null)
+  const [role, setRole] = useState<string>(() => {
+    if (!initial?.role) return ''
+    return isKnownRole(initial.role) ? initial.role : 'Other'
+  })
+  const [customRole, setCustomRole] = useState<string>(() =>
+    initial?.role && !isKnownRole(initial.role) ? initial.role : '',
+  )
   const [email, setEmail] = useState(initial?.email ?? '')
   const [phone, setPhone] = useState(initial?.phone ?? '')
   const [notes, setNotes] = useState(initial?.notes ?? '')
@@ -31,7 +43,7 @@ export default function ContactForm({
       await onSave({
         client_id: clientId || null,
         name: name.trim(),
-        role,
+        role: role === 'Other' ? customRole.trim() || 'Other' : role || null,
         email: email.trim() || null,
         phone: phone.trim() || null,
         notes: notes.trim() || null,
@@ -63,11 +75,7 @@ export default function ContactForm({
       </Field>
 
       <Field label="Role">
-        <select
-          value={role ?? ''}
-          onChange={(e) => setRole((e.target.value || null) as Contact['role'])}
-          style={inputStyle}
-        >
+        <select value={role} onChange={(e) => setRole(e.target.value)} style={inputStyle}>
           <option value="">—</option>
           {CONTACT_ROLES.map((r) => (
             <option key={r} value={r}>
@@ -76,6 +84,17 @@ export default function ContactForm({
           ))}
         </select>
       </Field>
+
+      {role === 'Other' && (
+        <Field label="Specify role">
+          <input
+            value={customRole}
+            onChange={(e) => setCustomRole(e.target.value)}
+            placeholder="e.g. Diesel Mechanic"
+            style={inputStyle}
+          />
+        </Field>
+      )}
 
       <Field label="Email">
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />

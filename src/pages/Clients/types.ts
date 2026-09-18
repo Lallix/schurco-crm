@@ -1,4 +1,14 @@
-export const CLIENT_TYPES = ['Customer', 'Distributor', 'Prospect', 'Contractor', 'Supplier'] as const
+export const CLIENT_TYPES = [
+  'Customer',
+  'Distributor',
+  'Prospect',
+  'Contractor',
+  'Supplier',
+  'Buying House',
+  'Project House',
+  'EPCM',
+  'Mining House',
+] as const
 export type ClientType = (typeof CLIENT_TYPES)[number]
 
 export interface Client {
