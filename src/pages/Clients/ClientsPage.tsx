@@ -246,7 +246,14 @@ function ClientsTable({
   onDelete: (c: Client) => void
 }) {
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--surface)' }}>
+    <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--surface)', tableLayout: 'fixed' }}>
+      <colgroup>
+        <col style={{ width: '36%' }} />
+        <col style={{ width: '18%' }} />
+        <col style={{ width: '17%' }} />
+        <col style={{ width: '17%' }} />
+        <col style={{ width: '12%' }} />
+      </colgroup>
       <thead>
         <tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>
           <Th>Name</Th>
