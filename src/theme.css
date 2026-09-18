@@ -159,6 +159,13 @@ details[open] > summary.disclosure .chevron {
   gap: 1.25rem;
 }
 
+.group-toggle-row {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 720px) {
   .hamburger {
     display: flex;
@@ -190,6 +197,11 @@ details[open] > summary.disclosure .chevron {
     height: 1px;
     align-self: stretch;
     margin: 0.4rem 0;
+  }
+
+  .group-toggle-row {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .two-col-grid {

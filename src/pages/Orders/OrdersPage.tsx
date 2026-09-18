@@ -310,7 +310,7 @@ export default function OrdersPage() {
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1rem' }}>
+      <div className="group-toggle-row">
         {(['none', 'rep', 'customer', 'category'] as GroupBy[]).map((g) => (
           <button
             key={g}
