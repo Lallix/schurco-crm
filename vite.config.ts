@@ -5,6 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 // https://vite.dev/config/
 export default defineConfig({
   base: '/schurco-crm/',
+  server: { port: 8093, strictPort: true },
   plugins: [
     react(),
     VitePWA({

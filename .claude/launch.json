@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "schurco-crm",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "8093", "--strictPort"],
+      "port": 8093,
+      "autoPort": false
+    }
+  ]
+}
