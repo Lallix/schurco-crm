@@ -13,3 +13,6 @@ Customer relationship manager for Schurco: clients, contacts, opportunities, con
 - Only work inside this folder. Never start another app's server.
 - Use relative paths only. This folder is opened on two PCs with different Windows usernames (`GideonV` and `lalli`).
 - The repo is public: `.env` stays local; only the Supabase anon/publishable key may appear in front-end code.
+
+## Previous discussions
+Before starting work, read `_files\docs\claude-history\HANDOVER.md`: where the build stands, key decisions, and open questions from earlier Claude sessions. The full past conversations are in the same folder; search them when you need detail.
